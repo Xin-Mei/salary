@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>支援藥師薪資計算系統</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;background:#f5f5f0;min-height:100vh;color:#1a1a1a}
+.nav{display:flex;background:#fff;border-bottom:1px solid #e8e8e4;padding:0 1.5rem;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.nb{padding:14px 20px;font-size:14px;font-weight:500;cursor:pointer;background:none;border:none;color:#888;border-bottom:2px solid transparent;transition:all .15s}
+.nb.on{color:#0f6e56;border-bottom-color:#1d9e75}
+.nb:hover:not(.on){color:#333}
+.pg{display:none;padding:1.5rem;max-width:680px;margin:0 auto}
+.pg.on{display:block}
+.card{background:#fff;border:1px solid #e8e8e4;border-radius:12px;padding:1.4rem 1.6rem;margin-bottom:1rem}
+.ct{font-size:15px;font-weight:600;margin-bottom:1.1rem;color:#1a1a1a}
+.fg{margin-bottom:.9rem}
+label{display:block;font-size:13px;color:#666;margin-bottom:5px}
+select,input[type=text],input[type=number],input[type=date],input[type=month],input[type=password],input[type=time]{width:100%;padding:9px 11px;border:1px solid #d8d8d4;border-radius:8px;font-size:14px;background:#fff;color:#1a1a1a;outline:none;transition:border-color .15s,box-shadow .15s}
+select:focus,input:focus{border-color:#1d9e75;box-shadow:0 0 0 3px rgba(29,158,117,.12)}
+.combo{position:relative}
+.ci{width:100%;padding:9px 11px;border:1px solid #d8d8d4;border-radius:8px;font-size:14px;background:#fff;color:#1a1a1a;outline:none;transition:border-color .15s,box-shadow .15s}
+.ci:focus{border-color:#1d9e75;box-shadow:0 0 0 3px rgba(29,158,117,.12)}
+.cdrop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #d8d8d4;border-radius:8px;z-index:50;max-height:200px;overflow-y:auto;display:none;box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.cdrop.open{display:block}
+.copt{padding:9px 11px;font-size:14px;cursor:pointer;color:#1a1a1a}
+.copt:hover,.copt.sel{background:#e1f5ee;color:#0f6e56}
+.cempty{padding:9px 11px;font-size:13px;color:#999}
+.seg{background:#f9f9f6;border:1px solid #e8e8e4;border-radius:8px;padding:1rem;margin-bottom:.7rem}
+.shdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem}
+.stitle{font-size:13px;font-weight:600;color:#333}
+.sdel{background:none;border:none;cursor:pointer;font-size:13px;color:#c0392b;padding:0}
+.sdel:hover{color:#922b21}
+.tr{display:grid;grid-template-columns:1fr 28px 1fr;gap:6px;align-items:end;margin-bottom:.7rem}
+.tsep{text-align:center;padding-bottom:10px;color:#999;font-size:18px}
+.rg{display:flex;gap:7px}
+.rb{flex:1;padding:9px;border:1px solid #d8d8d4;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#888;text-align:center;transition:all .15s;user-select:none}
+.rb.on{background:#e1f5ee;border-color:#1d9e75;color:#0f6e56;font-weight:600}
+.addseg{width:100%;padding:9px;border:1px dashed #c8c8c4;border-radius:8px;background:none;cursor:pointer;font-size:13px;color:#999;margin-bottom:.9rem;transition:all .15s}
+.addseg:hover{border-color:#1d9e75;color:#1d9e75;background:#f0fbf7}
+.sumbar{background:#e1f5ee;border:1px solid #5dcaa5;border-radius:10px;padding:.9rem 1.2rem;margin:.8rem 0;display:flex;justify-content:space-between;align-items:center}
+.slbl{font-size:13px;color:#1d9e75;font-weight:500}
+.sval{font-size:22px;font-weight:700;color:#085041}
+.bmain{width:100%;padding:12px;background:#1d9e75;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
+.bmain:hover{background:#0f6e56}
+.bghost{width:100%;padding:11px;background:#fff;border:1px solid #d8d8d4;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;color:#666;transition:all .15s}
+.bghost:hover{background:#f5f5f0;color:#333}
+.brow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:1rem}
+.toast{background:#e1f5ee;border:1px solid #5dcaa5;border-radius:8px;padding:10px 14px;font-size:14px;color:#0f6e56;margin-top:10px;display:none;font-weight:500}
+/* steps */
+.steps{display:flex;align-items:center;margin-bottom:1.2rem}
+.step{display:flex;align-items:center;gap:7px;font-size:13px;color:#aaa}
+.step.on{color:#0f6e56;font-weight:600}
+.step.done{color:#aaa}
+.snum{width:24px;height:24px;border-radius:50%;border:1.5px solid #d8d8d4;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;background:#fff;flex-shrink:0}
+.step.on .snum{background:#1d9e75;color:#fff;border-color:#1d9e75}
+.step.done .snum{background:#e1f5ee;color:#0f6e56;border-color:#5dcaa5}
+.sline{flex:1;height:1px;background:#e8e8e4;margin:0 10px}
+/* receipt */
+.rcpt{background:#fff;border:1px solid #e8e8e4;border-radius:12px;overflow:hidden;margin-bottom:1rem;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.rhead{background:#085041;padding:1.4rem 1.6rem;text-align:center}
+.rhead-t{font-size:17px;font-weight:600;color:#9fe1cb;letter-spacing:.06em}
+.rhead-s{font-size:12px;color:#5dcaa5;margin-top:5px}
+.rbody{padding:1.2rem 1.6rem}
+.rfield{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid #f0f0ec}
+.rfield:last-child{border-bottom:none}
+.rlbl{font-size:13px;color:#888}
+.rval{font-size:14px;font-weight:600;color:#1a1a1a}
+.rdiv{border:none;border-top:1px dashed #e0e0da;margin:.6rem 0}
+.rseg-block{margin:.2rem 0}
+.rseg{display:flex;justify-content:space-between;align-items:center;padding:7px 0}
+.rsegl{font-size:13px;color:#555;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rsegr{font-size:13px;color:#1a1a1a;white-space:nowrap;margin-left:8px}
+.rtotal{background:#f0fbf7;border-top:1px solid #c8ead8;padding:1.1rem 1.6rem;display:flex;justify-content:space-between;align-items:center}
+.rtlbl{font-size:15px;font-weight:600;color:#1a1a1a}
+.rtval{font-size:28px;font-weight:700;color:#0f6e56}
+.seg-head-lbl{font-size:12px;color:#999;font-weight:500;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px}
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.by{background:#e1f5ee;color:#0f6e56}
+.bn{background:#faeeda;color:#633806}
+/* admin */
+.lock{position:absolute;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;z-index:10;border-radius:12px;min-height:400px}
+.licon{font-size:36px}
+.lt{font-size:18px;font-weight:600;color:#1a1a1a}
+.ls{font-size:14px;color:#888}
+.lw{width:260px;display:flex;flex-direction:column;gap:10px}
+.err{color:#c0392b;font-size:13px;display:none}
+.tabrow{display:flex;gap:6px;margin-bottom:1.2rem;align-items:center;flex-wrap:wrap}
+.tab{padding:7px 16px;border:1px solid #d8d8d4;border-radius:99px;font-size:13px;cursor:pointer;color:#888;background:#fff;transition:all .15s}
+.tab.on{background:#1d9e75;color:#fff;border-color:#1d9e75}
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.2rem}
+.sc{background:#fff;border:1px solid #e8e8e4;border-radius:10px;padding:.9rem 1rem}
+.scl{font-size:12px;color:#888;margin-bottom:4px}
+.scv{font-size:22px;font-weight:700;color:#1a1a1a}
+.fr{display:flex;gap:8px;margin-bottom:1rem;align-items:flex-end;flex-wrap:wrap}
+.fr .fg{flex:1;margin:0;min-width:110px}
+.bs{padding:9px 13px;border:1px solid #d8d8d4;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#666;white-space:nowrap;transition:all .15s}
+.bs:hover{background:#f5f5f0;color:#333}
+.bs.p{background:#1d9e75;color:#fff;border-color:#1d9e75}
+.bs.p:hover{background:#0f6e56}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;padding:8px 9px;font-weight:600;color:#888;border-bottom:1px solid #e8e8e4;white-space:nowrap}
+td{padding:8px 9px;border-bottom:1px solid #f0f0ec;color:#1a1a1a;vertical-align:top}
+tr:last-child td{border-bottom:none}
+.delbtn{background:none;border:none;cursor:pointer;color:#c0392b;font-size:12px;padding:0 3px}
+.empty{text-align:center;padding:2rem;color:#aaa;font-size:14px}
+.rh{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:6px}
+.rh span{font-size:12px;color:#888;font-weight:500}
+.rh span:not(:first-child){text-align:right}
+.rrow{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px}
+.rrow span{font-size:14px}
+.rrow input{text-align:right;font-size:13px}
+.segsum{font-size:12px;color:#888;line-height:1.8}
+.ntags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:1rem}
+.ntag{display:flex;align-items:center;gap:5px;padding:5px 12px;background:#f5f5f0;border:1px solid #e8e8e4;border-radius:99px;font-size:13px}
+.ntag button{background:none;border:none;cursor:pointer;color:#c0392b;font-size:13px;padding:0;line-height:1}
+.anrow{display:flex;gap:8px}
+.anrow input{flex:1}
+</style>
+</head>
+<body>
+<div class="nav">
+  <button class="nb on" onclick="go('front')">前台 — 薪資填報</button>
+  <button class="nb" onclick="go('admin')">後台 — 管理後台</button>
+</div>
+
+<!-- 前台 -->
+<div id="pg-front" class="pg on">
+
+  <!-- 步驟一 -->
+  <div id="view-form">
+    <div class="steps">
+      <div class="step on"><div class="snum">1</div>填寫資料</div>
+      <div class="sline"></div>
+      <div class="step"><div class="snum">2</div>確認送出</div>
+    </div>
+    <div class="card">
+      <div class="ct">支援薪資填報</div>
+      <div class="fg"><label>支援日期</label><input type="date" id="f-date"/></div>
+      <div class="fg"><label>支援院區</label>
+        <select id="f-hosp" onchange="calcSum()"><option value="">— 請選擇院區 —</option></select>
+      </div>
+      <div class="fg">
+        <label>支援藥師姓名</label>
+        <div class="combo">
+          <input class="ci" id="ci" placeholder="請選擇或輸入姓名搜尋" autocomplete="off"
+            oninput="filterDrop()" onfocus="openDrop()" onblur="setTimeout(closeDrop,180)"/>
+          <div class="cdrop" id="cdrop"></div>
+        </div>
+        <input type="hidden" id="f-name"/>
+      </div>
+      <label style="margin-bottom:.6rem;display:block;font-size:13px;color:#666">班別時段（最多 3 段）</label>
+      <div id="segs-wrap"></div>
+      <button class="addseg" id="addseg-btn" onclick="addSeg()">＋ 新增時段</button>
+      <div class="sumbar" id="sumbar" style="display:none">
+        <span class="slbl">當日應付薪資合計</span>
+        <span class="sval" id="sumval">$0</span>
+      </div>
+      <button class="bmain" onclick="toConfirm()">預覽確認 →</button>
+    </div>
+  </div>
+
+  <!-- 步驟二：收據確認 -->
+  <div id="view-confirm" style="display:none">
+    <div class="steps">
+      <div class="step done"><div class="snum">✓</div>填寫資料</div>
+      <div class="sline"></div>
+      <div class="step on"><div class="snum">2</div>確認送出</div>
+    </div>
+    <div class="rcpt">
+      <div class="rhead">
+        <div class="rhead-t">支援薪資確認單</div>
+        <div class="rhead-s" id="rc-time"></div>
+      </div>
+      <div class="rbody">
+        <div class="rfield"><span class="rlbl">支援院區</span><span class="rval" id="rc-hosp"></span></div>
+        <div class="rfield"><span class="rlbl">支援藥師</span><span class="rval" id="rc-name"></span></div>
+        <div class="rfield"><span class="rlbl">支援日期</span><span class="rval" id="rc-date"></span></div>
+        <hr class="rdiv"/>
+        <div id="rc-segs"></div>
+      </div>
+      <div class="rtotal">
+        <span class="rtlbl">應付薪資合計</span>
+        <span class="rtval" id="rc-total"></span>
+      </div>
+    </div>
+    <div class="brow">
+      <button class="bghost" onclick="toForm()">← 返回修改</button>
+      <button class="bmain" onclick="doSubmit()">確認送出</button>
+    </div>
+    <div class="toast" id="toast">✓ 記錄已儲存！</div>
+  </div>
+</div>
+
+<!-- 後台 -->
+<div id="pg-admin" class="pg" style="position:relative;min-height:500px">
+  <div class="lock" id="lock">
+    <div class="licon">🔒</div>
+    <div class="lt">後台管理</div>
+    <div class="ls">請輸入管理密碼</div>
+    <div class="lw">
+      <input type="password" id="pw-in" placeholder="密碼" onkeydown="if(event.key==='Enter')unlock()"/>
+      <button class="bmain" onclick="unlock()">登入</button>
+      <div class="err" id="pw-err">密碼錯誤，請重試</div>
+    </div>
+  </div>
+  <div id="adm-body" style="display:none">
+    <div class="tabrow">
+      <div class="tab on" onclick="atab('rec')">薪資紀錄</div>
+      <div class="tab" onclick="atab('rate')">費率設定</div>
+      <div class="tab" onclick="atab('names')">藥師名單</div>
+      <div style="flex:1"></div>
+      <button class="bs" onclick="lockout()">登出</button>
+    </div>
+
+    <!-- 紀錄 -->
+    <div id="atab-rec">
+      <div class="sgrid">
+        <div class="sc"><div class="scl">本月筆數</div><div class="scv" id="s-cnt">0</div></div>
+        <div class="sc"><div class="scl">本月工時合計</div><div class="scv" id="s-hrs">0 hr</div></div>
+        <div class="sc"><div class="scl">本月應付薪資</div><div class="scv" id="s-amt">$0</div></div>
+      </div>
+      <div class="card">
+        <div class="fr">
+          <div class="fg"><label>篩選院區</label><select id="fi-h" onchange="renderRec()"><option value="">全部</option></select></div>
+          <div class="fg"><label>篩選月份</label><input type="month" id="fi-m" onchange="renderRec()"/></div>
+          <div class="fg"><label>藥師姓名</label><input type="text" id="fi-n" placeholder="姓名" oninput="renderRec()"/></div>
+          <button class="bs" onclick="clearFi()">清除</button>
+          <button class="bs p" onclick="exportCSV()">匯出 CSV ↓</button>
+        </div>
+        <div id="rec-wrap"></div>
+      </div>
+    </div>
+
+    <!-- 費率 -->
+    <div id="atab-rate" style="display:none">
+      <div class="card">
+        <div class="ct">各院區時薪費率（元／小時）</div>
+        <div class="rh"><span>院區</span><span>有藥助</span><span>無藥助</span></div>
+        <div id="rates-list"></div>
+        <div style="height:10px"></div>
+        <button class="bs p" onclick="saveRates()">儲存費率</button>
+      </div>
+      <div class="card">
+        <div class="ct">修改後台密碼</div>
+        <div class="fg"><label>新密碼</label><input type="password" id="new-pw" placeholder="輸入新密碼"/></div>
+        <button class="bs p" onclick="changePw()">更新密碼</button>
+      </div>
+    </div>
+
+    <!-- 藥師名單 -->
+    <div id="atab-names" style="display:none">
+      <div class="card">
+        <div class="ct">支援藥師名單管理</div>
+        <div class="ntags" id="ntags"></div>
+        <div class="anrow">
+          <input type="text" id="new-name" placeholder="新增藥師姓名" onkeydown="if(event.key==='Enter')addName()"/>
+          <button class="bs p" onclick="addName()">新增</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const HOSPS=['鶯歌','三樹','桃園','土城','八德','龍潭','大溪','大竹','大湳','平鎮','埔心','觀音','龍岡','大園'];
+let records=[],rates={},pw='admin123',pharmacists=[],segs=[],pending=null;
+
+function load(){
+  try{records=JSON.parse(localStorage.getItem('ph5_rec')||'[]')}catch(e){records=[]}
+  try{rates=JSON.parse(localStorage.getItem('ph5_rates')||'null')||{}}catch(e){rates={}}
+  try{pw=localStorage.getItem('ph5_pw')||'admin123'}catch(e){}
+  try{pharmacists=JSON.parse(localStorage.getItem('ph5_names')||'[]')}catch(e){pharmacists=[]}
+  HOSPS.forEach(h=>{if(!rates[h])rates[h]={with:700,without:800}})
+}
+function save(){
+  localStorage.setItem('ph5_rec',JSON.stringify(records))
+  localStorage.setItem('ph5_rates',JSON.stringify(rates))
+  localStorage.setItem('ph5_pw',pw)
+  localStorage.setItem('ph5_names',JSON.stringify(pharmacists))
+}
+function init(){
+  load()
+  const td=new Date().toISOString().slice(0,10)
+  document.getElementById('f-date').value=td
+  document.getElementById('fi-m').value=td.slice(0,7)
+  buildSels();segs=[];addSeg();renderRec();renderRates();renderNTags()
+}
+function buildSels(){
+  ['f-hosp','fi-h'].forEach(id=>{
+    const s=document.getElementById(id)
+    s.innerHTML=(id==='f-hosp'?'<option value="">— 請選擇院區 —</option>':'<option value="">全部</option>')+HOSPS.map(h=>`<option value="${h}">${h}</option>`).join('')
+  })
+}
+
+// combo
+function openDrop(){renderDrop();document.getElementById('cdrop').classList.add('open')}
+function closeDrop(){document.getElementById('cdrop').classList.remove('open')}
+function filterDrop(){document.getElementById('f-name').value='';renderDrop();document.getElementById('cdrop').classList.add('open')}
+function renderDrop(){
+  const q=document.getElementById('ci').value.trim().toLowerCase()
+  const cur=document.getElementById('f-name').value
+  const list=pharmacists.filter(n=>n.toLowerCase().includes(q))
+  document.getElementById('cdrop').innerHTML=list.length
+    ?list.map(n=>`<div class="copt${n===cur?' sel':''}" onmousedown="pickName('${n}')">${n}</div>`).join('')
+    :'<div class="cempty">查無藥師</div>'
+}
+function pickName(n){
+  document.getElementById('ci').value=n
+  document.getElementById('f-name').value=n
+  document.getElementById('cdrop').classList.remove('open')
+}
+
+// segs
+function addSeg(){
+  if(segs.length>=3)return
+  segs.push({start:'',end:'',assist:'with'});renderSegs()
+}
+function delSeg(i){segs.splice(i,1);renderSegs();calcSum()}
+function renderSegs(){
+  document.getElementById('segs-wrap').innerHTML=segs.map((s,i)=>`
+    <div class="seg">
+      <div class="shdr">
+        <span class="stitle">第 ${i+1} 段班</span>
+        ${segs.length>1?`<button class="sdel" onclick="delSeg(${i})">移除</button>`:''}
+      </div>
+      <div class="tr">
+        <div><label style="margin-bottom:5px">上班</label><input type="time" value="${s.start}" onchange="segs[${i}].start=this.value;calcSum()"/></div>
+        <div class="tsep">→</div>
+        <div><label style="margin-bottom:5px">下班</label><input type="time" value="${s.end}" onchange="segs[${i}].end=this.value;calcSum()"/></div>
+      </div>
+      <div class="rg">
+        <div class="rb ${s.assist==='with'?'on':''}" onclick="segs[${i}].assist='with';renderSegs();calcSum()">有藥助</div>
+        <div class="rb ${s.assist==='without'?'on':''}" onclick="segs[${i}].assist='without';renderSegs();calcSum()">無藥助</div>
+      </div>
+    </div>`).join('')
+  document.getElementById('addseg-btn').style.display=segs.length>=3?'none':'block'
+}
+function calcHrs(s,e){
+  if(!s||!e)return null
+  const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number)
+  let m=(eh*60+em)-(sh*60+sm);if(m<=0)m+=1440;return+(m/60).toFixed(2)
+}
+function calcSum(){
+  const hosp=document.getElementById('f-hosp').value
+  const r=rates[hosp]||{with:700,without:800}
+  let total=0,any=false
+  segs.forEach(s=>{const h=calcHrs(s.start,s.end);if(!h)return;any=true;total+=Math.round(h*(s.assist==='with'?r.with:r.without))})
+  const bar=document.getElementById('sumbar')
+  if(!any||!hosp){bar.style.display='none';return}
+  bar.style.display='flex';document.getElementById('sumval').textContent='$'+total.toLocaleString()
+}
+
+// step 1→2
+function toConfirm(){
+  const date=document.getElementById('f-date').value
+  const hosp=document.getElementById('f-hosp').value
+  const name=document.getElementById('f-name').value.trim()
+  if(!date||!hosp||!name){alert('請填寫日期、院區，並選擇藥師姓名');return}
+  const r=rates[hosp]||{with:700,without:800}
+  let segData=[],total=0
+  segs.forEach((s,i)=>{
+    const hrs=calcHrs(s.start,s.end);if(!hrs)return
+    const rate=s.assist==='with'?r.with:r.without
+    const amt=Math.round(hrs*rate);total+=amt
+    segData.push({seg:i+1,start:s.start,end:s.end,assist:s.assist,hrs,rate,amt})
+  })
+  if(!segData.length){alert('請至少填寫一段班的時間');return}
+  pending={date,hosp,name,segs:segData,total}
+
+  const now=new Date(),p=n=>String(n).padStart(2,'0')
+  document.getElementById('rc-time').textContent=`填報時間：${now.getFullYear()}/${p(now.getMonth()+1)}/${p(now.getDate())} ${p(now.getHours())}:${p(now.getMinutes())}`
+  document.getElementById('rc-hosp').textContent=hosp
+  document.getElementById('rc-name').textContent=name
+  document.getElementById('rc-date').textContent=date
+  document.getElementById('rc-total').textContent='$'+total.toLocaleString()
+  document.getElementById('rc-segs').innerHTML=
+    `<div class="seg-head-lbl">班別明細</div>`+
+    segData.map((s,i)=>`
+      ${i>0?'<hr class="rdiv"/>':''}
+      <div class="rseg">
+        <span class="rsegl">
+          第 ${s.seg} 段 &nbsp; ${s.start} – ${s.end}
+          <span class="badge ${s.assist==='with'?'by':'bn'}">${s.assist==='with'?'有藥助':'無藥助'}</span>
+        </span>
+        <span class="rsegr">${s.hrs} hr × $${s.rate} = <strong>$${s.amt.toLocaleString()}</strong></span>
+      </div>`).join('')
+
+  document.getElementById('view-form').style.display='none'
+  document.getElementById('view-confirm').style.display='block'
+  window.scrollTo({top:0,behavior:'smooth'})
+}
+function toForm(){
+  document.getElementById('view-form').style.display='block'
+  document.getElementById('view-confirm').style.display='none'
+  pending=null
+}
+function doSubmit(){
+  if(!pending)return
+  records.push({id:Date.now(),...pending});save()
+  const t=document.getElementById('toast');t.style.display='block'
+  setTimeout(()=>{
+    t.style.display='none'
+    document.getElementById('ci').value=''
+    document.getElementById('f-name').value=''
+    document.getElementById('f-hosp').value=''
+    segs=[];addSeg()
+    document.getElementById('sumbar').style.display='none'
+    document.getElementById('view-confirm').style.display='none'
+    document.getElementById('view-form').style.display='block'
+    pending=null;renderRec()
+    window.scrollTo({top:0,behavior:'smooth'})
+  },1800)
+}
+
+// nav
+function go(p){
+  ['front','admin'].forEach((id,i)=>{
+    document.getElementById('pg-'+id).classList.toggle('on',id===p)
+    document.querySelectorAll('.nb')[i].classList.toggle('on',id===p)
+  })
+  window.scrollTo({top:0,behavior:'smooth'})
+}
+
+// lock
+function unlock(){
+  if(document.getElementById('pw-in').value===pw){
+    document.getElementById('lock').style.display='none'
+    document.getElementById('adm-body').style.display='block'
+    document.getElementById('pw-err').style.display='none'
+    document.getElementById('pw-in').value=''
+  }else document.getElementById('pw-err').style.display='block'
+}
+function lockout(){document.getElementById('lock').style.display='flex';document.getElementById('adm-body').style.display='none'}
+
+// admin tabs
+function atab(t){
+  ['rec','rate','names'].forEach((id,i)=>{
+    document.getElementById('atab-'+id).style.display=id===t?'block':'none'
+    document.querySelectorAll('.tab')[i].classList.toggle('on',id===t)
+  })
+}
+
+// records
+function getFil(){
+  const fh=document.getElementById('fi-h').value,fm=document.getElementById('fi-m').value,fn=document.getElementById('fi-n').value.trim()
+  return records.filter(r=>(!fh||r.hosp===fh)&&(!fm||r.date.startsWith(fm))&&(!fn||r.name.includes(fn)))
+}
+function renderRec(){
+  const fm=document.getElementById('fi-m').value
+  const mR=records.filter(r=>r.date.startsWith(fm))
+  document.getElementById('s-cnt').textContent=mR.length
+  document.getElementById('s-hrs').textContent=mR.reduce((s,r)=>s+r.segs.reduce((a,sg)=>a+sg.hrs,0),0).toFixed(1)+' hr'
+  document.getElementById('s-amt').textContent='$'+mR.reduce((s,r)=>s+r.total,0).toLocaleString()
+  const f=getFil(),wrap=document.getElementById('rec-wrap')
+  if(!f.length){wrap.innerHTML='<div class="empty">尚無符合記錄</div>';return}
+  const sumT=f.reduce((s,r)=>s+r.total,0)
+  wrap.innerHTML=`<div style="overflow-x:auto"><table><thead><tr>
+    <th>日期</th><th>院區</th><th>藥師</th><th>班別時段</th><th>薪資</th><th></th>
+  </tr></thead><tbody>${f.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`<tr>
+    <td style="white-space:nowrap">${r.date}</td><td>${r.hosp}</td><td>${r.name}</td>
+    <td><div class="segsum">${r.segs.map(s=>`段${s.seg} ${s.start}–${s.end} <span class="badge ${s.assist==='with'?'by':'bn'}">${s.assist==='with'?'有':'無'}藥助</span> ${s.hrs}hr×$${s.rate}`).join('<br>')}</div></td>
+    <td style="font-weight:700;white-space:nowrap;color:#0f6e56">$${r.total.toLocaleString()}</td>
+    <td><button class="delbtn" onclick="delRec(${r.id})">✕</button></td>
+  </tr>`).join('')}</tbody>
+  <tfoot><tr>
+    <td colspan="4" style="text-align:right;font-size:12px;color:#aaa;padding-top:10px;font-weight:500">篩選合計</td>
+    <td style="font-weight:700;padding-top:10px;color:#0f6e56">$${sumT.toLocaleString()}</td><td></td>
+  </tr></tfoot></table></div>`
+}
+function delRec(id){if(!confirm('確定刪除此筆記錄？'))return;records=records.filter(r=>r.id!==id);save();renderRec()}
+function clearFi(){document.getElementById('fi-h').value='';document.getElementById('fi-m').value=new Date().toISOString().slice(0,7);document.getElementById('fi-n').value='';renderRec()}
+function exportCSV(){
+  const f=getFil();if(!f.length){alert('無資料可匯出');return}
+  const hdr='日期,院區,藥師,段別,上班,下班,工時(hr),藥助,時薪,段薪資,當日合計'
+  const rows=[];f.forEach(r=>{r.segs.forEach((s,i)=>rows.push(`${r.date},${r.hosp},${r.name},第${s.seg}段,${s.start},${s.end},${s.hrs},${s.assist==='with'?'有':'無'},${s.rate},${s.amt},${i===0?r.total:''}`))})
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+[hdr,...rows].join('\n')],{type:'text/csv;charset=utf-8'}));a.download=`薪資紀錄_${new Date().toISOString().slice(0,10)}.csv`;a.click()
+}
+
+// rates
+function renderRates(){
+  document.getElementById('rates-list').innerHTML=HOSPS.map(h=>`
+    <div class="rrow"><span>${h}</span>
+      <input type="number" id="rw-${h}" value="${(rates[h]||{}).with||700}" min="0" step="50"/>
+      <input type="number" id="rwo-${h}" value="${(rates[h]||{}).without||800}" min="0" step="50"/>
+    </div>`).join('')
+}
+function saveRates(){HOSPS.forEach(h=>{rates[h]={with:+document.getElementById('rw-'+h).value||0,without:+document.getElementById('rwo-'+h).value||0}});save();alert('費率已儲存！')}
+function changePw(){const v=document.getElementById('new-pw').value.trim();if(!v){alert('請輸入新密碼');return}pw=v;save();document.getElementById('new-pw').value='';alert('密碼已更新！')}
+
+// names
+function renderNTags(){
+  const el=document.getElementById('ntags')
+  el.innerHTML=pharmacists.length?pharmacists.map((n,i)=>`<div class="ntag">${n}<button onclick="removeName(${i})">✕</button></div>`).join(''):'<span style="font-size:13px;color:#aaa">尚無藥師，請新增</span>'
+}
+function addName(){const v=document.getElementById('new-name').value.trim();if(!v)return;if(pharmacists.includes(v)){alert('已存在此藥師');return}pharmacists.push(v);save();document.getElementById('new-name').value='';renderNTags()}
+function removeName(i){if(!confirm(`確定移除「${pharmacists[i]}」？`))return;pharmacists.splice(i,1);save();renderNTags()}
+
+init()
+</script>
+</body>
+</html>
