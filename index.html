@@ -398,10 +398,10 @@ function clearErr(fid,eid){const el=document.getElementById(fid);if(el)el.classL
 
 function addSeg(){
   if(segs.length>=3)return;
-  // 先把現有輸入框的值存回 segs，避免新增時段觸發 renderSegs 清空已填資料
   syncSegsFromDOM();
   segs.push({start:'',end:'',assist:'with'});
-  renderSegs();
+  appendSegDOM(segs.length-1);
+  document.getElementById('add-seg-btn').style.display=segs.length>=3?'none':'block';
 }
 function delSeg(i){
   syncSegsFromDOM();
@@ -409,14 +409,38 @@ function delSeg(i){
   renderSegs(); calcSum();
 }
 
-/* 把 DOM 目前的時間值同步回 segs 陣列 */
+/* 把 DOM 目前的時間值同步回 segs 陣列（用文字欄位） */
 function syncSegsFromDOM(){
   segs.forEach((_,i)=>{
     const s=document.getElementById('t-s-'+i);
     const e=document.getElementById('t-e-'+i);
-    if(s) segs[i].start=s.value;
-    if(e) segs[i].end=e.value;
+    if(s){ const v=formatTimeInput(s.value); segs[i].start=v; if(v) s.value=v; }
+    if(e){ const v=formatTimeInput(e.value); segs[i].end=v; if(v) e.value=v; }
   });
+}
+
+/* 格式化輸入：接受 HH:MM 或 HHMM，輸出 HH:MM，非法回傳空字串 */
+function formatTimeInput(v){
+  if(!v) return '';
+  v=v.trim().replace(/：/g,':');
+  // 純數字 4 碼：1400 → 14:00
+  if(/^\d{4}$/.test(v)) v=v.slice(0,2)+':'+v.slice(2);
+  // HH:MM
+  if(/^\d{1,2}:\d{2}$/.test(v)){
+    const[h,m]=v.split(':').map(Number);
+    if(h>=0&&h<=23&&m>=0&&m<=59) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+  }
+  return '';
+}
+
+function onTimeInput(i, field, val){
+  const fmt=formatTimeInput(val);
+  segs[i][field]=fmt;
+  // 若格式化後不同，更新輸入框顯示
+  const el=document.getElementById(field==='start'?'t-s-'+i:'t-e-'+i);
+  if(el&&fmt&&fmt!==val) el.value=fmt;
+  calcSum();
+  document.getElementById('e-segs').classList.remove('show');
 }
 
 /* 切換藥助：只更新樣式，不重建 DOM */
@@ -430,37 +454,89 @@ function setAssist(i, val){
   calcSum();
 }
 
+/* 新增單一段班到 DOM 尾端（不重建整個列表） */
+function appendSegDOM(i){
+  const s=segs[i];
+  const wrap=document.getElementById('segs-wrap');
+  const div=document.createElement('div');
+  div.className='seg'; div.id='seg-'+i;
+  div.innerHTML=buildSegHTML(i,s);
+  wrap.appendChild(div);
+  updateAllDelBtns();
+}
+
+function buildSegHTML(i,s){
+  return `
+    <div class="seg-hdr" id="seg-hdr-${i}">
+      <span class="seg-title">第 ${i+1} 段班</span>
+      ${segs.length>1?`<button class="seg-del" onclick="delSeg(${i})">✕ 移除</button>`:''}
+    </div>
+    <div class="time-grid">
+      <div><label style="margin-bottom:5px">上班時間</label>
+        <input type="text" id="t-s-${i}" value="${s.start}" placeholder="例：09:00"
+          maxlength="5" inputmode="numeric"
+          oninput="onTimeInput(${i},'start',this.value)"
+          onblur="onTimeBlur(${i},'start',this.value)"/>
+      </div>
+      <div class="time-arrow">→</div>
+      <div><label style="margin-bottom:5px">下班時間</label>
+        <input type="text" id="t-e-${i}" value="${s.end}" placeholder="例：17:00"
+          maxlength="5" inputmode="numeric"
+          oninput="onTimeInput(${i},'end',this.value)"
+          onblur="onTimeBlur(${i},'end',this.value)"/>
+      </div>
+    </div>
+    <div class="assist-row" id="assist-row-${i}">
+      <div class="rb ${s.assist==='with'?'on':''}" data-val="with" onclick="setAssist(${i},'with')">有藥助</div>
+      <div class="rb ${s.assist==='without'?'on':''}" data-val="without" onclick="setAssist(${i},'without')">無藥助</div>
+    </div>`;
+}
+
+/* blur 時自動補齊格式 */
+function onTimeBlur(i, field, val){
+  const fmt=formatTimeInput(val);
+  segs[i][field]=fmt;
+  const el=document.getElementById(field==='start'?'t-s-'+i:'t-e-'+i);
+  if(el) el.value=fmt;
+  if(fmt) calcSum();
+}
+
+/* 自動在輸入第2位數字後加冒號，方便輸入 */
+function onTimeInput(i, field, val){
+  // 自動插入冒號：輸入到第2碼且無冒號時補上
+  let v=val.replace(/[^0-9:]/g,'');
+  if(v.length===2&&!v.includes(':')) v=v+':';
+  const el=document.getElementById(field==='start'?'t-s-'+i:'t-e-'+i);
+  if(el&&v!==val){ el.value=v; }
+  segs[i][field]=v;
+  const fmt=formatTimeInput(v);
+  if(fmt) segs[i][field]=fmt;
+  calcSum();
+  document.getElementById('e-segs').classList.remove('show');
+}
+
+/* 重新渲染（移除段班時使用） */
 function renderSegs(){
   const wrap=document.getElementById('segs-wrap');
-  wrap.innerHTML=segs.map((s,i)=>`
-    <div class="seg" id="seg-${i}">
-      <div class="seg-hdr">
-        <span class="seg-title">第 ${i+1} 段班</span>
-        ${segs.length>1?`<button class="seg-del" onclick="delSeg(${i})">✕ 移除</button>`:''}
-      </div>
-      <div class="time-grid">
-        <div><label style="margin-bottom:5px">上班時間</label>
-          <input type="time" id="t-s-${i}" value="${s.start}" step="60"
-            onchange="segs[${i}].start=this.value;calcSum();document.getElementById('e-segs').classList.remove('show')"/>
-        </div>
-        <div class="time-arrow">→</div>
-        <div><label style="margin-bottom:5px">下班時間</label>
-          <input type="time" id="t-e-${i}" value="${s.end}" step="60"
-            onchange="segs[${i}].end=this.value;calcSum();document.getElementById('e-segs').classList.remove('show')"/>
-        </div>
-      </div>
-      <div class="assist-row" id="assist-row-${i}">
-        <div class="rb ${s.assist==='with'?'on':''}" data-val="with" onclick="setAssist(${i},'with')">有藥助</div>
-        <div class="rb ${s.assist==='without'?'on':''}" data-val="without" onclick="setAssist(${i},'without')">無藥助</div>
-      </div>
-    </div>`).join('');
-  segs.forEach((_,i)=>{
-    ['t-s-','t-e-'].forEach(p=>{
-      const el=document.getElementById(p+i);
-      if(el){el.step=60;el.setAttribute('step','60');}
-    });
-  });
+  wrap.innerHTML=segs.map((s,i)=>`<div class="seg" id="seg-${i}">${buildSegHTML(i,s)}</div>`).join('');
+  updateAllDelBtns();
   document.getElementById('add-seg-btn').style.display=segs.length>=3?'none':'block';
+}
+
+function updateAllDelBtns(){
+  segs.forEach((_,i)=>{
+    const hdr=document.getElementById('seg-hdr-'+i);
+    if(!hdr) return;
+    const existing=hdr.querySelector('.seg-del');
+    if(segs.length>1&&!existing){
+      const btn=document.createElement('button');
+      btn.className='seg-del'; btn.textContent='✕ 移除';
+      btn.onclick=()=>delSeg(i);
+      hdr.appendChild(btn);
+    } else if(segs.length===1&&existing){
+      existing.remove();
+    }
+  });
 }
 
 function calcHrs(s,e){
@@ -482,6 +558,8 @@ function calcSum(){
 }
 
 function goConfirm(){
+  // 先把文字輸入框的時間值同步回 segs 陣列
+  syncSegsFromDOM();
   let valid=true;
   const date=document.getElementById('f-date').value;
   const hosp=document.getElementById('f-hosp').value;
