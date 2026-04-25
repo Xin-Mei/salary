@@ -512,13 +512,40 @@ function buildSegHTML(i,s){
     </div>`;
 }
 
-/* blur 時自動補齊格式 */
+/* blur 時自動補齊格式並驗證上下班順序 */
 function onTimeBlur(i, field, val){
   const fmt=formatTimeInput(val);
   segs[i][field]=fmt;
   const el=document.getElementById(field==='start'?'t-s-'+i:'t-e-'+i);
   if(el) el.value=fmt;
+  // 驗證上下班時間
+  checkSegTimeError(i);
   if(fmt) calcSum();
+}
+
+function checkSegTimeError(i){
+  const s=segs[i].start, e=segs[i].end;
+  const errId='seg-time-err-'+i;
+  let errEl=document.getElementById(errId);
+  if(!errEl){
+    const seg=document.getElementById('seg-'+i);
+    if(!seg)return;
+    errEl=document.createElement('div');
+    errEl.id=errId;
+    errEl.style.cssText='font-size:12px;color:#c0392b;margin-top:6px;display:none';
+    errEl.textContent='⚠ 下班時間必須晚於上班時間';
+    seg.appendChild(errEl);
+  }
+  if(s&&e&&!validateSegTimes(s,e)){
+    errEl.style.display='block';
+    // 標紅下班時間框
+    const endEl=document.getElementById('t-e-'+i);
+    if(endEl) endEl.classList.add('field-err');
+  } else {
+    errEl.style.display='none';
+    const endEl=document.getElementById('t-e-'+i);
+    if(endEl) endEl.classList.remove('field-err');
+  }
 }
 
 /* 輸入過程不干擾，離開欄位（blur）才格式化 */
@@ -561,8 +588,21 @@ function updateAllDelBtns(){
 function calcHrs(s,e){
   if(!s||!e)return null;
   const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
-  let m=(eh*60+em)-(sh*60+sm);if(m<=0)m+=1440;
+  let m=(eh*60+em)-(sh*60+sm);
+  if(m<=0)m+=1440; // 跨午夜
   return+(m/60).toFixed(2);
+}
+
+/* 驗證下班時間必須大於上班時間（跨午夜除外，工時 > 12hr 視為跨午夜）*/
+function validateSegTimes(s,e){
+  if(!s||!e)return true; // 未填不在此驗證
+  const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
+  const sm2=sh*60+sm, em2=eh*60+em;
+  const diff=em2-sm2;
+  // 若差值為負且絕對值 > 12hr（720min），視為跨午夜，允許
+  if(diff<0 && Math.abs(diff)<720) return false; // 下班早於上班且非跨午夜 → 不合法
+  if(diff===0) return false; // 上下班相同 → 不合法
+  return true;
 }
 function calcSum(){
   const hosp=document.getElementById('f-hosp').value;
@@ -598,6 +638,16 @@ function goConfirm(){
     const amt=Math.round(hrs*rate);salary+=amt;
     segData.push({seg:i+1,start:s.start,end:s.end,assist:s.assist,hrs,rate,amt});
   });
+  // 檢查每段的時間順序
+  let timeOrderOk=true;
+  segs.forEach((s,i)=>{
+    if(s.start&&s.end&&!validateSegTimes(s.start,s.end)){
+      timeOrderOk=false;
+      checkSegTimeError(i);
+    }
+  });
+  if(!timeOrderOk) valid=false;
+
   if(!segData.length){document.getElementById('e-segs').classList.add('show');valid=false;}
   else document.getElementById('e-segs').classList.remove('show');
   if(!valid)return;
