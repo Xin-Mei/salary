@@ -419,13 +419,14 @@ function syncSegsFromDOM(){
   });
 }
 
-/* 格式化輸入：接受 HH:MM 或 HHMM，輸出 HH:MM，非法回傳空字串 */
+/* 格式化輸入：接受 HH:MM、HHMM、HMM（如730→07:30），輸出 HH:MM */
 function formatTimeInput(v){
   if(!v) return '';
-  v=v.trim().replace(/：/g,':');
-  // 純數字 4 碼：1400 → 14:00
+  v=v.trim().replace(/：/g,':').replace(/\s/g,'');
+  // 純數字 3碼(730)→補0→0730，4碼(1400)直接處理
+  if(/^\d{3}$/.test(v)) v='0'+v;
   if(/^\d{4}$/.test(v)) v=v.slice(0,2)+':'+v.slice(2);
-  // HH:MM
+  // HH:MM 或 H:MM
   if(/^\d{1,2}:\d{2}$/.test(v)){
     const[h,m]=v.split(':').map(Number);
     if(h>=0&&h<=23&&m>=0&&m<=59) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
@@ -632,7 +633,9 @@ async function submitForm(){
     ['ci-ph','ci-rep'].forEach(id=>document.getElementById(id).value='');
     ['f-ph','f-rep','f-commission'].forEach(id=>document.getElementById(id).value='');
     document.getElementById('f-hosp').value='';
-    segs=[];addSeg();
+    // 清空並重置班別時段（時間留空）
+    segs=[{start:'',end:'',assist:'with'}];
+    renderSegs();
     document.getElementById('summary').style.display='none';
   },2000);
   renderRec();renderAnalytics();
