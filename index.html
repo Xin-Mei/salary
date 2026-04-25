@@ -2,261 +2,300 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>支援藥師薪資計算系統</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang TC','Microsoft JhengHei',sans-serif;background:#f5f5f0;min-height:100vh;color:#1a1a1a}
-.nav{display:flex;background:#fff;border-bottom:1px solid #e8e8e4;padding:0 1.5rem;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.nb{padding:14px 20px;font-size:14px;font-weight:500;cursor:pointer;background:none;border:none;color:#888;border-bottom:2px solid transparent;transition:all .15s}
-.nb.on{color:#0f6e56;border-bottom-color:#1d9e75}
-.nb:hover:not(.on){color:#333}
-.pg{display:none;padding:1.5rem;max-width:680px;margin:0 auto}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f5;font-size:14px;color:#111}
+.app{min-height:100vh}
+.nav{display:flex;background:#fff;border-bottom:1px solid #e0e0e0;padding:0 1.25rem;position:sticky;top:0;z-index:100;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.nb{padding:13px 18px;font-size:14px;font-weight:500;cursor:pointer;background:none;border:none;color:#666;border-bottom:2px solid transparent;transition:all .15s}
+.nb.on{color:#0F6E56;border-bottom-color:#1D9E75}
+.nb:hover:not(.on){color:#111}
+.pg{display:none;padding:1.25rem;max-width:720px;margin:0 auto}
 .pg.on{display:block}
-.card{background:#fff;border:1px solid #e8e8e4;border-radius:12px;padding:1.4rem 1.6rem;margin-bottom:1rem}
-.ct{font-size:15px;font-weight:600;margin-bottom:1.1rem;color:#1a1a1a}
-.fg{margin-bottom:.9rem}
-label{display:block;font-size:13px;color:#666;margin-bottom:5px}
-select,input[type=text],input[type=number],input[type=date],input[type=month],input[type=password],input[type=time]{width:100%;padding:9px 11px;border:1px solid #d8d8d4;border-radius:8px;font-size:14px;background:#fff;color:#1a1a1a;outline:none;transition:border-color .15s,box-shadow .15s}
-select:focus,input:focus{border-color:#1d9e75;box-shadow:0 0 0 3px rgba(29,158,117,.12)}
+.card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:1.2rem 1.4rem;margin-bottom:1rem}
+.ct{font-size:15px;font-weight:600;margin-bottom:1rem;color:#111}
+.fg{margin-bottom:.9rem;position:relative}
+label{display:block;font-size:13px;color:#555;margin-bottom:5px;font-weight:500}
+.req{color:#c0392b;margin-left:2px}
+select,input[type=text],input[type=number],input[type=date],input[type=month],input[type=password]{width:100%;padding:9px 11px;border:1px solid #d0d0d0;border-radius:7px;font-size:14px;background:#fff;color:#111;transition:border .15s}
+select:focus,input:focus{outline:none;box-shadow:0 0 0 3px #1D9E7525;border-color:#1D9E75}
+.field-err{border-color:#e74c3c!important;box-shadow:0 0 0 3px #e74c3c18!important}
+.err-msg{font-size:12px;color:#c0392b;margin-top:4px;display:none}
+.err-msg.show{display:block}
+input[type=time]{width:100%;padding:9px 11px;border:1px solid #d0d0d0;border-radius:7px;font-size:14px;background:#fff;color:#111;-webkit-appearance:none;transition:border .15s}
+input[type=time]::-webkit-datetime-edit-ampm-field{display:none!important}
+input[type=time]::-webkit-calendar-picker-indicator{display:none}
+input[type=time]:focus{outline:none;box-shadow:0 0 0 3px #1D9E7525;border-color:#1D9E75}
 .combo{position:relative}
-.ci{width:100%;padding:9px 11px;border:1px solid #d8d8d4;border-radius:8px;font-size:14px;background:#fff;color:#1a1a1a;outline:none;transition:border-color .15s,box-shadow .15s}
-.ci:focus{border-color:#1d9e75;box-shadow:0 0 0 3px rgba(29,158,117,.12)}
-.cdrop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #d8d8d4;border-radius:8px;z-index:50;max-height:200px;overflow-y:auto;display:none;box-shadow:0 4px 16px rgba(0,0,0,.1)}
-.cdrop.open{display:block}
-.copt{padding:9px 11px;font-size:14px;cursor:pointer;color:#1a1a1a}
-.copt:hover,.copt.sel{background:#e1f5ee;color:#0f6e56}
-.cempty{padding:9px 11px;font-size:13px;color:#999}
-.seg{background:#f9f9f6;border:1px solid #e8e8e4;border-radius:8px;padding:1rem;margin-bottom:.7rem}
-.shdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem}
-.stitle{font-size:13px;font-weight:600;color:#333}
-.sdel{background:none;border:none;cursor:pointer;font-size:13px;color:#c0392b;padding:0}
-.sdel:hover{color:#922b21}
-.tr{display:grid;grid-template-columns:1fr 28px 1fr;gap:6px;align-items:end;margin-bottom:.7rem}
-.tsep{text-align:center;padding-bottom:10px;color:#999;font-size:18px}
-.rg{display:flex;gap:7px}
-.rb{flex:1;padding:9px;border:1px solid #d8d8d4;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#888;text-align:center;transition:all .15s;user-select:none}
-.rb.on{background:#e1f5ee;border-color:#1d9e75;color:#0f6e56;font-weight:600}
-.addseg{width:100%;padding:9px;border:1px dashed #c8c8c4;border-radius:8px;background:none;cursor:pointer;font-size:13px;color:#999;margin-bottom:.9rem;transition:all .15s}
-.addseg:hover{border-color:#1d9e75;color:#1d9e75;background:#f0fbf7}
-.sumbar{background:#e1f5ee;border:1px solid #5dcaa5;border-radius:10px;padding:.9rem 1.2rem;margin:.8rem 0;display:flex;justify-content:space-between;align-items:center}
-.slbl{font-size:13px;color:#1d9e75;font-weight:500}
-.sval{font-size:22px;font-weight:700;color:#085041}
-.bmain{width:100%;padding:12px;background:#1d9e75;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
-.bmain:hover{background:#0f6e56}
-.bghost{width:100%;padding:11px;background:#fff;border:1px solid #d8d8d4;border-radius:8px;font-size:14px;font-weight:500;cursor:pointer;color:#666;transition:all .15s}
-.bghost:hover{background:#f5f5f0;color:#333}
-.brow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:1rem}
-.toast{background:#e1f5ee;border:1px solid #5dcaa5;border-radius:8px;padding:10px 14px;font-size:14px;color:#0f6e56;margin-top:10px;display:none;font-weight:500}
-/* steps */
-.steps{display:flex;align-items:center;margin-bottom:1.2rem}
-.step{display:flex;align-items:center;gap:7px;font-size:13px;color:#aaa}
-.step.on{color:#0f6e56;font-weight:600}
-.step.done{color:#aaa}
-.snum{width:24px;height:24px;border-radius:50%;border:1.5px solid #d8d8d4;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;background:#fff;flex-shrink:0}
-.step.on .snum{background:#1d9e75;color:#fff;border-color:#1d9e75}
-.step.done .snum{background:#e1f5ee;color:#0f6e56;border-color:#5dcaa5}
-.sline{flex:1;height:1px;background:#e8e8e4;margin:0 10px}
-/* receipt */
-.rcpt{background:#fff;border:1px solid #e8e8e4;border-radius:12px;overflow:hidden;margin-bottom:1rem;box-shadow:0 2px 12px rgba(0,0,0,.06)}
-.rhead{background:#085041;padding:1.4rem 1.6rem;text-align:center}
-.rhead-t{font-size:17px;font-weight:600;color:#9fe1cb;letter-spacing:.06em}
-.rhead-s{font-size:12px;color:#5dcaa5;margin-top:5px}
-.rbody{padding:1.2rem 1.6rem}
-.rfield{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid #f0f0ec}
-.rfield:last-child{border-bottom:none}
-.rlbl{font-size:13px;color:#888}
-.rval{font-size:14px;font-weight:600;color:#1a1a1a}
-.rdiv{border:none;border-top:1px dashed #e0e0da;margin:.6rem 0}
-.rseg-block{margin:.2rem 0}
-.rseg{display:flex;justify-content:space-between;align-items:center;padding:7px 0}
-.rsegl{font-size:13px;color:#555;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.rsegr{font-size:13px;color:#1a1a1a;white-space:nowrap;margin-left:8px}
-.rtotal{background:#f0fbf7;border-top:1px solid #c8ead8;padding:1.1rem 1.6rem;display:flex;justify-content:space-between;align-items:center}
-.rtlbl{font-size:15px;font-weight:600;color:#1a1a1a}
-.rtval{font-size:28px;font-weight:700;color:#0f6e56}
-.seg-head-lbl{font-size:12px;color:#999;font-weight:500;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px}
+.combo-input{width:100%;padding:9px 11px;border:1px solid #d0d0d0;border-radius:7px;font-size:14px;background:#fff;color:#111;transition:border .15s}
+.combo-input:focus{outline:none;box-shadow:0 0 0 3px #1D9E7525;border-color:#1D9E75}
+.combo-input.field-err{border-color:#e74c3c!important}
+.combo-drop{position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:1px solid #d0d0d0;border-radius:8px;z-index:200;max-height:200px;overflow-y:auto;display:none;box-shadow:0 6px 20px rgba(0,0,0,.12)}
+.combo-drop.open{display:block}
+.combo-opt{padding:9px 11px;font-size:14px;cursor:pointer;color:#111;transition:background .1s}
+.combo-opt:hover,.combo-opt.selected{background:#E8F8F2;color:#0F6E56}
+.combo-empty{padding:9px 11px;font-size:13px;color:#999}
+.seg{background:#f8f9fa;border:1px solid #e8e8e8;border-radius:8px;padding:1rem;margin-bottom:.75rem}
+.seg-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem}
+.seg-title{font-size:13px;font-weight:600;color:#333}
+.seg-del{background:none;border:none;cursor:pointer;font-size:13px;color:#e74c3c;padding:2px 6px;border-radius:4px}
+.seg-del:hover{background:#fdecea}
+.time-grid{display:grid;grid-template-columns:1fr 24px 1fr;gap:8px;align-items:end;margin-bottom:.8rem}
+.time-arrow{text-align:center;padding-bottom:10px;color:#aaa;font-size:16px}
+.assist-row{display:flex;gap:8px}
+.rb{flex:1;padding:9px;border:1px solid #d0d0d0;border-radius:7px;font-size:13px;cursor:pointer;background:#fff;color:#666;text-align:center;transition:all .15s;user-select:none;font-weight:500}
+.rb.on{background:#E8F8F2;border-color:#1D9E75;color:#0F6E56;font-weight:600}
+.add-seg-btn{width:100%;padding:9px;border:1.5px dashed #ccc;border-radius:8px;background:none;cursor:pointer;font-size:13px;color:#888;margin-bottom:.9rem;transition:all .15s;font-weight:500}
+.add-seg-btn:hover{border-color:#1D9E75;color:#1D9E75;background:#f0faf6}
+.day-summary{background:linear-gradient(135deg,#0F6E56,#1D9E75);border-radius:10px;padding:1rem 1.3rem;margin:.9rem 0;display:none;justify-content:space-between;align-items:center}
+.sum-lbl{font-size:13px;color:#9FE1CB}
+.sum-val{font-size:22px;font-weight:700;color:#fff}
+.btn-main{width:100%;padding:12px;background:#1D9E75;color:#fff;border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-main:hover{background:#0F6E56}
+.btn-main:disabled{background:#aaa;cursor:not-allowed}
+.btn-ghost{width:100%;padding:12px;background:#fff;color:#555;border:1px solid #d0d0d0;border-radius:8px;font-size:15px;font-weight:500;cursor:pointer;transition:all .15s}
+.btn-ghost:hover{background:#f5f5f5}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.toast{border-radius:8px;padding:10px 14px;font-size:14px;margin-top:10px;display:none;font-weight:500}
+.toast.ok{background:#E8F8F2;border:1px solid #5DCAA5;color:#0F6E56}
+.toast.err{background:#fdecea;border:1px solid #e74c3c;color:#c0392b}
+.receipt{background:#fff;border:1px solid #e0e0e0;border-radius:12px;overflow:hidden;margin-bottom:1rem;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+.rh-hdr{background:linear-gradient(135deg,#0F6E56,#1D9E75);padding:1.4rem;text-align:center}
+.rh-title{font-size:17px;font-weight:700;color:#fff;margin-bottom:3px}
+.rh-sub{font-size:12px;color:#9FE1CB}
+.rh-body{padding:1.3rem 1.5rem}
+.rr{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f0f0f0}
+.rr:last-of-type{border-bottom:none}
+.rl{font-size:13px;color:#777}
+.rv{font-size:14px;font-weight:600;text-align:right;color:#111}
+.rdiv{height:1px;background:#eee;margin:.5rem 0}
+.seg-line{display:flex;justify-content:space-between;padding:5px 0;font-size:13px;align-items:center;gap:8px}
+.sl-l{color:#777;flex:1}
+.sl-r{font-weight:500;white-space:nowrap}
+.rtotal-box{background:#f0faf6;border:1px solid #c3e6d8;border-radius:8px;padding:1rem 1.1rem;margin:1rem 0 .5rem}
+.rtotal-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0}
+.rtotal-lbl{font-size:13px;color:#555}
+.rtotal-val{font-size:14px;font-weight:600;color:#0F6E56}
+.rtotal-grand{border-top:1px solid #c3e6d8;margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;align-items:center}
+.rtotal-grand-lbl{font-size:14px;font-weight:600;color:#0F6E56}
+.rtotal-grand-val{font-size:22px;font-weight:700;color:#0F6E56}
+.confirm-note{font-size:12px;color:#999;text-align:center;margin-bottom:.9rem}
 .badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
-.by{background:#e1f5ee;color:#0f6e56}
-.bn{background:#faeeda;color:#633806}
-/* admin */
-.lock{position:absolute;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;z-index:10;border-radius:12px;min-height:400px}
-.licon{font-size:36px}
-.lt{font-size:18px;font-weight:600;color:#1a1a1a}
-.ls{font-size:14px;color:#888}
-.lw{width:260px;display:flex;flex-direction:column;gap:10px}
-.err{color:#c0392b;font-size:13px;display:none}
-.tabrow{display:flex;gap:6px;margin-bottom:1.2rem;align-items:center;flex-wrap:wrap}
-.tab{padding:7px 16px;border:1px solid #d8d8d4;border-radius:99px;font-size:13px;cursor:pointer;color:#888;background:#fff;transition:all .15s}
-.tab.on{background:#1d9e75;color:#fff;border-color:#1d9e75}
-.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.2rem}
-.sc{background:#fff;border:1px solid #e8e8e4;border-radius:10px;padding:.9rem 1rem}
-.scl{font-size:12px;color:#888;margin-bottom:4px}
-.scv{font-size:22px;font-weight:700;color:#1a1a1a}
-.fr{display:flex;gap:8px;margin-bottom:1rem;align-items:flex-end;flex-wrap:wrap}
-.fr .fg{flex:1;margin:0;min-width:110px}
-.bs{padding:9px 13px;border:1px solid #d8d8d4;border-radius:8px;font-size:13px;cursor:pointer;background:#fff;color:#666;white-space:nowrap;transition:all .15s}
-.bs:hover{background:#f5f5f0;color:#333}
-.bs.p{background:#1d9e75;color:#fff;border-color:#1d9e75}
-.bs.p:hover{background:#0f6e56}
+.by{background:#E8F8F2;color:#0F6E56}
+.bn{background:#FEF3E2;color:#b7580a}
+.sync-dot{font-size:12px;padding:4px 11px;border-radius:99px;display:inline-flex;align-items:center;gap:5px;font-weight:500}
+.s-ok{background:#E8F8F2;color:#0F6E56}
+.s-err{background:#fdecea;color:#c0392b}
+.s-ing{background:#FEF9E7;color:#b7830a}
+.lock-wrap{position:absolute;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;z-index:10;border-radius:10px;min-height:400px}
+.lock-inner{width:260px;display:flex;flex-direction:column;gap:10px}
+.pw-err-msg{color:#c0392b;font-size:13px;display:none}
+.tab-strip{display:flex;gap:6px;margin-bottom:1rem;align-items:center;flex-wrap:wrap}
+.tab-btn{padding:6px 15px;border:1px solid #d0d0d0;border-radius:99px;font-size:13px;cursor:pointer;color:#666;background:#fff;font-weight:500;transition:all .15s}
+.tab-btn.on{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1rem}
+.stat-card{background:#f8f9fa;border-radius:8px;padding:.9rem 1rem}
+.stat-lbl{font-size:11px;color:#888;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.stat-val{font-size:20px;font-weight:700;color:#111}
+.filter-row{display:flex;gap:8px;margin-bottom:1rem;align-items:flex-end;flex-wrap:wrap}
+.filter-row .fg{flex:1;margin:0;min-width:100px}
+.btn-sm{padding:9px 13px;border:1px solid #d0d0d0;border-radius:7px;font-size:13px;cursor:pointer;background:#fff;color:#666;white-space:nowrap;font-weight:500}
+.btn-sm:hover{background:#f5f5f5}
+.btn-sm.p{background:#1D9E75;color:#fff;border-color:#1D9E75}
+.btn-sm.p:hover{background:#0F6E56}
 table{width:100%;border-collapse:collapse;font-size:12px}
-th{text-align:left;padding:8px 9px;font-weight:600;color:#888;border-bottom:1px solid #e8e8e4;white-space:nowrap}
-td{padding:8px 9px;border-bottom:1px solid #f0f0ec;color:#1a1a1a;vertical-align:top}
-tr:last-child td{border-bottom:none}
-.delbtn{background:none;border:none;cursor:pointer;color:#c0392b;font-size:12px;padding:0 3px}
-.empty{text-align:center;padding:2rem;color:#aaa;font-size:14px}
-.rh{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;margin-bottom:6px}
-.rh span{font-size:12px;color:#888;font-weight:500}
-.rh span:not(:first-child){text-align:right}
-.rrow{display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px;align-items:center;margin-bottom:8px}
-.rrow span{font-size:14px}
-.rrow input{text-align:right;font-size:13px}
-.segsum{font-size:12px;color:#888;line-height:1.8}
-.ntags{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:1rem}
-.ntag{display:flex;align-items:center;gap:5px;padding:5px 12px;background:#f5f5f0;border:1px solid #e8e8e4;border-radius:99px;font-size:13px}
-.ntag button{background:none;border:none;cursor:pointer;color:#c0392b;font-size:13px;padding:0;line-height:1}
-.anrow{display:flex;gap:8px}
-.anrow input{flex:1}
+th{text-align:left;padding:8px 9px;font-weight:600;color:#666;border-bottom:1.5px solid #e8e8e8;white-space:nowrap;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
+td{padding:8px 9px;border-bottom:1px solid #f0f0f0;color:#111;vertical-align:top}
+tr:hover td{background:#fafafa}
+.del-btn{background:none;border:none;cursor:pointer;color:#e74c3c;font-size:13px;padding:2px 5px;border-radius:4px}
+.del-btn:hover{background:#fdecea}
+.empty-msg{text-align:center;padding:2.5rem;color:#aaa;font-size:14px}
+.segs-cell{font-size:12px;color:#666;line-height:1.8}
+.analytics-stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1rem}
+.bar-chart{display:flex;flex-direction:column;gap:9px;margin-top:.9rem}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-lbl{width:56px;text-align:right;color:#777;flex-shrink:0;font-size:11px;font-weight:500}
+.bar-bg{flex:1;background:#f0f0f0;border-radius:5px;height:24px;position:relative;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,#1D9E75,#27ae8f);border-radius:5px;display:flex;align-items:center;padding-left:8px;color:#fff;font-size:11px;font-weight:600;white-space:nowrap;min-width:4px}
+.assist-bar{display:flex;height:30px;border-radius:8px;overflow:hidden;margin-bottom:.7rem}
+.legend-row{display:flex;gap:1.2rem;font-size:12px;margin-top:.4rem}
+.legend-dot{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:4px}
+.sheet-note{background:#FEF9E7;border:1px solid #F9CA24;border-radius:8px;padding:.9rem 1.1rem;font-size:13px;color:#7d5a00;margin-bottom:1rem;line-height:1.6}
 </style>
 </head>
 <body>
-<div class="nav">
-  <button class="nb on" onclick="go('front')">前台 — 薪資填報</button>
-  <button class="nb" onclick="go('admin')">後台 — 管理後台</button>
-</div>
+<div class="app">
+  <div class="nav">
+    <button class="nb on" onclick="go('front')">前台 — 薪資填報</button>
+    <button class="nb" onclick="go('admin')">後台 — 管理後台</button>
+  </div>
 
-<!-- 前台 -->
-<div id="pg-front" class="pg on">
-
-  <!-- 步驟一 -->
-  <div id="view-form">
-    <div class="steps">
-      <div class="step on"><div class="snum">1</div>填寫資料</div>
-      <div class="sline"></div>
-      <div class="step"><div class="snum">2</div>確認送出</div>
-    </div>
-    <div class="card">
-      <div class="ct">支援薪資填報</div>
-      <div class="fg"><label>支援日期</label><input type="date" id="f-date"/></div>
-      <div class="fg"><label>支援院區</label>
-        <select id="f-hosp" onchange="calcSum()"><option value="">— 請選擇院區 —</option></select>
-      </div>
-      <div class="fg">
-        <label>支援藥師姓名</label>
-        <div class="combo">
-          <input class="ci" id="ci" placeholder="請選擇或輸入姓名搜尋" autocomplete="off"
-            oninput="filterDrop()" onfocus="openDrop()" onblur="setTimeout(closeDrop,180)"/>
-          <div class="cdrop" id="cdrop"></div>
+  <div id="pg-front" class="pg on">
+    <div id="step-form">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem">
+          <span class="ct" style="margin:0">支援薪資填報</span>
+          <span id="sync-badge" class="sync-dot s-ing">⏳ 連線中</span>
         </div>
-        <input type="hidden" id="f-name"/>
-      </div>
-      <label style="margin-bottom:.6rem;display:block;font-size:13px;color:#666">班別時段（最多 3 段）</label>
-      <div id="segs-wrap"></div>
-      <button class="addseg" id="addseg-btn" onclick="addSeg()">＋ 新增時段</button>
-      <div class="sumbar" id="sumbar" style="display:none">
-        <span class="slbl">當日應付薪資合計</span>
-        <span class="sval" id="sumval">$0</span>
-      </div>
-      <button class="bmain" onclick="toConfirm()">預覽確認 →</button>
-    </div>
-  </div>
-
-  <!-- 步驟二：收據確認 -->
-  <div id="view-confirm" style="display:none">
-    <div class="steps">
-      <div class="step done"><div class="snum">✓</div>填寫資料</div>
-      <div class="sline"></div>
-      <div class="step on"><div class="snum">2</div>確認送出</div>
-    </div>
-    <div class="rcpt">
-      <div class="rhead">
-        <div class="rhead-t">支援薪資確認單</div>
-        <div class="rhead-s" id="rc-time"></div>
-      </div>
-      <div class="rbody">
-        <div class="rfield"><span class="rlbl">支援院區</span><span class="rval" id="rc-hosp"></span></div>
-        <div class="rfield"><span class="rlbl">支援藥師</span><span class="rval" id="rc-name"></span></div>
-        <div class="rfield"><span class="rlbl">支援日期</span><span class="rval" id="rc-date"></span></div>
-        <hr class="rdiv"/>
-        <div id="rc-segs"></div>
-      </div>
-      <div class="rtotal">
-        <span class="rtlbl">應付薪資合計</span>
-        <span class="rtval" id="rc-total"></span>
-      </div>
-    </div>
-    <div class="brow">
-      <button class="bghost" onclick="toForm()">← 返回修改</button>
-      <button class="bmain" onclick="doSubmit()">確認送出</button>
-    </div>
-    <div class="toast" id="toast">✓ 記錄已儲存！</div>
-  </div>
-</div>
-
-<!-- 後台 -->
-<div id="pg-admin" class="pg" style="position:relative;min-height:500px">
-  <div class="lock" id="lock">
-    <div class="licon">🔒</div>
-    <div class="lt">後台管理</div>
-    <div class="ls">請輸入管理密碼</div>
-    <div class="lw">
-      <input type="password" id="pw-in" placeholder="密碼" onkeydown="if(event.key==='Enter')unlock()"/>
-      <button class="bmain" onclick="unlock()">登入</button>
-      <div class="err" id="pw-err">密碼錯誤，請重試</div>
-    </div>
-  </div>
-  <div id="adm-body" style="display:none">
-    <div class="tabrow">
-      <div class="tab on" onclick="atab('rec')">薪資紀錄</div>
-      <div class="tab" onclick="atab('rate')">費率設定</div>
-      <div class="tab" onclick="atab('names')">藥師名單</div>
-      <div style="flex:1"></div>
-      <button class="bs" onclick="lockout()">登出</button>
-    </div>
-
-    <!-- 紀錄 -->
-    <div id="atab-rec">
-      <div class="sgrid">
-        <div class="sc"><div class="scl">本月筆數</div><div class="scv" id="s-cnt">0</div></div>
-        <div class="sc"><div class="scl">本月工時合計</div><div class="scv" id="s-hrs">0 hr</div></div>
-        <div class="sc"><div class="scl">本月應付薪資</div><div class="scv" id="s-amt">$0</div></div>
-      </div>
-      <div class="card">
-        <div class="fr">
-          <div class="fg"><label>篩選院區</label><select id="fi-h" onchange="renderRec()"><option value="">全部</option></select></div>
-          <div class="fg"><label>篩選月份</label><input type="month" id="fi-m" onchange="renderRec()"/></div>
-          <div class="fg"><label>藥師姓名</label><input type="text" id="fi-n" placeholder="姓名" oninput="renderRec()"/></div>
-          <button class="bs" onclick="clearFi()">清除</button>
-          <button class="bs p" onclick="exportCSV()">匯出 CSV ↓</button>
+        <div class="fg">
+          <label>支援日期 <span class="req">*</span></label>
+          <input type="date" id="f-date" onchange="clearErr('f-date','e-date')"/>
+          <div class="err-msg" id="e-date">請選擇支援日期</div>
         </div>
-        <div id="rec-wrap"></div>
+        <div class="fg">
+          <label>支援院區 <span class="req">*</span></label>
+          <select id="f-hosp" onchange="calcSum();clearErr('f-hosp','e-hosp')">
+            <option value="">— 請選擇院區 —</option>
+          </select>
+          <div class="err-msg" id="e-hosp">請選擇支援院區</div>
+        </div>
+        <div class="fg">
+          <label>支援藥師姓名 <span class="req">*</span></label>
+          <div class="combo">
+            <input type="text" class="combo-input" id="ci-ph" placeholder="請選擇或輸入搜尋" autocomplete="off"
+              oninput="filterCombo('ph')" onfocus="openCombo('ph')" onblur="setTimeout(()=>closeCombo('ph'),180)"/>
+            <div class="combo-drop" id="cd-ph"></div>
+          </div>
+          <input type="hidden" id="f-ph"/>
+          <div class="err-msg" id="e-ph">請選擇支援藥師姓名</div>
+        </div>
+        <div class="fg">
+          <label>櫃台人員 <span class="req">*</span></label>
+          <div class="combo">
+            <input type="text" class="combo-input" id="ci-rep" placeholder="請選擇或輸入搜尋" autocomplete="off"
+              oninput="filterCombo('rep')" onfocus="openCombo('rep')" onblur="setTimeout(()=>closeCombo('rep'),180)"/>
+            <div class="combo-drop" id="cd-rep"></div>
+          </div>
+          <input type="hidden" id="f-rep"/>
+          <div class="err-msg" id="e-rep">請選擇櫃台人員</div>
+        </div>
+        <label style="margin-bottom:.6rem;display:block;font-size:13px;color:#555;font-weight:500">
+          班別時段 <span class="req">*</span> <span style="font-weight:400;color:#999">（最多 3 段）</span>
+        </label>
+        <div id="segs-wrap"></div>
+        <button class="add-seg-btn" id="add-seg-btn" onclick="addSeg()">＋ 新增時段</button>
+        <div class="err-msg" id="e-segs" style="margin-top:-6px;margin-bottom:.8rem">請至少填寫一段班的上下班時間</div>
+        <div class="fg">
+          <label>商品抽成 <span class="req">*</span></label>
+          <input type="number" id="f-commission" min="0" placeholder="請輸入金額（元），無則填 0" oninput="calcSum();clearErr('f-commission','e-commission')"/>
+          <div class="err-msg" id="e-commission">請輸入商品抽成金額（無則填 0）</div>
+        </div>
+        <div class="day-summary" id="summary">
+          <span class="sum-lbl">當日應付合計（薪資＋抽成）</span>
+          <span class="sum-val" id="sum-total-val">$0</span>
+        </div>
+        <button class="btn-main" onclick="goConfirm()">預覽確認 →</button>
       </div>
     </div>
 
-    <!-- 費率 -->
-    <div id="atab-rate" style="display:none">
-      <div class="card">
-        <div class="ct">各院區時薪費率（元／小時）</div>
-        <div class="rh"><span>院區</span><span>有藥助</span><span>無藥助</span></div>
-        <div id="rates-list"></div>
-        <div style="height:10px"></div>
-        <button class="bs p" onclick="saveRates()">儲存費率</button>
+    <div id="step-confirm" style="display:none">
+      <div class="receipt">
+        <div class="rh-hdr">
+          <div class="rh-title">支援薪資確認單</div>
+          <div class="rh-sub" id="rc-sub">請確認以下資料後送出</div>
+        </div>
+        <div class="rh-body">
+          <div class="rr"><span class="rl">支援日期</span><span class="rv" id="rc-date">—</span></div>
+          <div class="rr"><span class="rl">支援院區</span><span class="rv" id="rc-hosp">—</span></div>
+          <div class="rr"><span class="rl">支援藥師</span><span class="rv" id="rc-ph">—</span></div>
+          <div class="rr"><span class="rl">櫃台人員</span><span class="rv" id="rc-rep">—</span></div>
+          <div class="rdiv"></div>
+          <div style="font-size:11px;color:#aaa;margin:.4rem 0 .3rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em">班別明細</div>
+          <div id="rc-segs"></div>
+          <div class="rdiv"></div>
+          <div class="rtotal-box">
+            <div class="rtotal-row"><span class="rtotal-lbl">薪資小計</span><span class="rtotal-val" id="rc-salary">$0</span></div>
+            <div class="rtotal-row"><span class="rtotal-lbl">商品抽成</span><span class="rtotal-val" id="rc-commission">$0</span></div>
+            <div class="rtotal-grand">
+              <span class="rtotal-grand-lbl">應付合計</span>
+              <span class="rtotal-grand-val" id="rc-total">$0</span>
+            </div>
+          </div>
+          <div class="confirm-note">請確認資料無誤後按下「確認送出」</div>
+          <div class="btn-row">
+            <button class="btn-ghost" onclick="goBack()">← 返回修改</button>
+            <button class="btn-main" id="btn-submit" onclick="submitForm()">確認送出</button>
+          </div>
+        </div>
       </div>
-      <div class="card">
-        <div class="ct">修改後台密碼</div>
-        <div class="fg"><label>新密碼</label><input type="password" id="new-pw" placeholder="輸入新密碼"/></div>
-        <button class="bs p" onclick="changePw()">更新密碼</button>
+      <div class="toast ok" id="toast-ok">✓ 已成功寫入 Google Sheet！</div>
+      <div class="toast err" id="toast-err">✕ 寫入失敗，請稍後重試</div>
+    </div>
+  </div>
+
+  <div id="pg-admin" class="pg" style="position:relative;min-height:500px">
+    <div class="lock-wrap" id="lock">
+      <div style="font-size:40px">🔒</div>
+      <div style="font-size:17px;font-weight:700">後台管理</div>
+      <div style="font-size:13px;color:#999">請輸入管理密碼</div>
+      <div class="lock-inner">
+        <input type="password" id="pw-in" placeholder="密碼" onkeydown="if(event.key==='Enter')unlock()"/>
+        <button class="btn-main" onclick="unlock()">登入</button>
+        <div class="pw-err-msg" id="pw-err">密碼錯誤，請重試</div>
       </div>
     </div>
+    <div id="adm-body" style="display:none">
+      <div class="sheet-note">
+        📋 <strong>院區費率、支援藥師、櫃台人員</strong>請直接在 Google Sheet 對應分頁維護，按「↻ 同步」載入最新資料。
+      </div>
+      <div class="tab-strip">
+        <div class="tab-btn on" onclick="atab('rec')">薪資紀錄</div>
+        <div class="tab-btn" onclick="atab('analytics')">統計分析</div>
+        <div class="tab-btn" onclick="atab('settings')">系統設定</div>
+        <div style="flex:1"></div>
+        <button class="btn-sm" onclick="refreshAll()" style="color:#1D9E75;border-color:#1D9E75">↻ 同步</button>
+        <button class="btn-sm" onclick="lockout()">登出</button>
+      </div>
 
-    <!-- 藥師名單 -->
-    <div id="atab-names" style="display:none">
-      <div class="card">
-        <div class="ct">支援藥師名單管理</div>
-        <div class="ntags" id="ntags"></div>
-        <div class="anrow">
-          <input type="text" id="new-name" placeholder="新增藥師姓名" onkeydown="if(event.key==='Enter')addName()"/>
-          <button class="bs p" onclick="addName()">新增</button>
+      <div id="atab-rec">
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-lbl">本月筆數</div><div class="stat-val" id="s-cnt">0</div></div>
+          <div class="stat-card"><div class="stat-lbl">本月工時</div><div class="stat-val" id="s-hrs">0 hr</div></div>
+          <div class="stat-card"><div class="stat-lbl">本月應付合計</div><div class="stat-val" id="s-amt">$0</div></div>
+        </div>
+        <div class="card">
+          <div class="filter-row">
+            <div class="fg"><label>院區</label><select id="fi-h" onchange="renderRec()"><option value="">全部</option></select></div>
+            <div class="fg"><label>開始日期</label><input type="date" id="fi-from" onchange="renderRec()"/></div>
+            <div class="fg"><label>結束日期</label><input type="date" id="fi-to" onchange="renderRec()"/></div>
+            <div class="fg"><label>藥師</label><input type="text" id="fi-n" placeholder="姓名" oninput="renderRec()"/></div>
+            <button class="btn-sm" onclick="clearFi()">清除</button>
+            <button class="btn-sm p" onclick="exportCSV()">匯出 CSV ↓</button>
+          </div>
+          <div id="rec-wrap"><div class="empty-msg">載入中...</div></div>
+        </div>
+      </div>
+
+      <div id="atab-analytics" style="display:none">
+        <div class="card">
+          <div class="ct" style="margin-bottom:.8rem">統計篩選</div>
+          <div class="filter-row" style="margin-bottom:0">
+            <div class="fg"><label>開始日期</label><input type="date" id="an-from" onchange="renderAnalytics()"/></div>
+            <div class="fg"><label>結束日期</label><input type="date" id="an-to" onchange="renderAnalytics()"/></div>
+            <div class="fg"><label>院區</label><select id="an-hosp" onchange="renderAnalytics()"><option value="">全部院區</option></select></div>
+            <button class="btn-sm" onclick="resetAnalytics()">重設</button>
+          </div>
+        </div>
+        <div class="analytics-stat-grid">
+          <div class="stat-card"><div class="stat-lbl">期間筆數</div><div class="stat-val" id="an-cnt">0</div></div>
+          <div class="stat-card"><div class="stat-lbl">期間工時</div><div class="stat-val" id="an-hrs">0 hr</div></div>
+          <div class="stat-card"><div class="stat-lbl">薪資合計</div><div class="stat-val" id="an-salary">$0</div></div>
+          <div class="stat-card"><div class="stat-lbl">抽成合計</div><div class="stat-val" id="an-commission">$0</div></div>
+          <div class="stat-card"><div class="stat-lbl">應付合計</div><div class="stat-val" id="an-amt">$0</div></div>
+          <div class="stat-card"><div class="stat-lbl">平均每筆</div><div class="stat-val" id="an-avg">$0</div></div>
+        </div>
+        <div class="card"><div class="ct">各院區應付合計</div><div class="bar-chart" id="chart-hosp"></div></div>
+        <div class="card"><div class="ct">各藥師應付合計</div><div class="bar-chart" id="chart-ph"></div></div>
+        <div class="card"><div class="ct">有藥助 vs 無藥助工時比例</div><div id="chart-assist" style="margin-top:.8rem"></div></div>
+      </div>
+
+      <div id="atab-settings" style="display:none">
+        <div class="card">
+          <div class="ct">修改後台密碼</div>
+          <div class="fg"><label>新密碼</label><input type="password" id="new-pw" placeholder="輸入新密碼"/></div>
+          <button class="btn-sm p" onclick="changePw()">更新密碼</button>
         </div>
       </div>
     </div>
@@ -264,240 +303,374 @@ tr:last-child td{border-bottom:none}
 </div>
 
 <script>
-const HOSPS=['鶯歌','三樹','桃園','土城','八德','龍潭','大溪','大竹','大湳','平鎮','埔心','觀音','龍岡','大園'];
-let records=[],rates={},pw='admin123',pharmacists=[],segs=[],pending=null;
+const GAS = 'https://script.google.com/macros/s/AKfycbx0yG9IzlalB4vXrM2VO_NTgZu6I8rTlF4mP4nmGTkxt5RdZX250rJdBS4bxOr6xGup/exec';
+const HOSPS_DEFAULT = ['鶯歌','三樹','桃園','土城','八德','龍潭','大溪','大竹','大湳','平鎮','埔心','觀音','龍岡','大園'];
+let records=[], rates={}, pw='admin123', pharmacists=[], reporters=[], segs=[], pending=null;
+let hosps=[...HOSPS_DEFAULT];
 
-function load(){
-  try{records=JSON.parse(localStorage.getItem('ph5_rec')||'[]')}catch(e){records=[]}
-  try{rates=JSON.parse(localStorage.getItem('ph5_rates')||'null')||{}}catch(e){rates={}}
-  try{pw=localStorage.getItem('ph5_pw')||'admin123'}catch(e){}
-  try{pharmacists=JSON.parse(localStorage.getItem('ph5_names')||'[]')}catch(e){pharmacists=[]}
-  HOSPS.forEach(h=>{if(!rates[h])rates[h]={with:700,without:800}})
+function api(params){
+  return new Promise(resolve=>{
+    const cb='cb_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const url=GAS+'?'+new URLSearchParams(params)+'&callback='+cb;
+    const s=document.createElement('script');
+    const timer=setTimeout(()=>{cleanup();resolve({error:'timeout'});},15000);
+    window[cb]=data=>{cleanup();resolve(data);};
+    function cleanup(){clearTimeout(timer);delete window[cb];if(s.parentNode)s.parentNode.removeChild(s);}
+    s.onerror=()=>{cleanup();resolve({error:'network error'});};
+    s.src=url; document.head.appendChild(s);
+  });
 }
-function save(){
-  localStorage.setItem('ph5_rec',JSON.stringify(records))
-  localStorage.setItem('ph5_rates',JSON.stringify(rates))
-  localStorage.setItem('ph5_pw',pw)
-  localStorage.setItem('ph5_names',JSON.stringify(pharmacists))
+
+async function loadAll(){
+  setSyncBadge('ing');
+  const [rR,cR]=await Promise.all([api({action:'getAll'}),api({action:'getConfig'})]);
+  let ok=true;
+  if(!rR||rR.error){ok=false;}
+  else{
+    records=(rR.records||[]).map(r=>({
+      id:r['ID'], date:String(r['日期']||'').slice(0,10),
+      hosp:r['院區'], ph:r['支援藥師'], rep:r['櫃台人員'],
+      segs:(()=>{try{return JSON.parse(r['段別明細']||'[]');}catch(e){return [];}})(),
+      salaryTotal:Number(r['薪資合計'])||0,
+      commission:Number(r['商品抽成'])||0,
+      total:Number(r['應付合計'])||0
+    })).filter(r=>r.date&&r.date.length===10);
+  }
+  if(!cR||cR.error){ok=false;}
+  else{
+    rates=cR.rates||{}; pharmacists=cR.pharmacists||[]; reporters=cR.reporters||[]; pw=cR.pw||'admin123';
+    hosps=Object.keys(rates).length?Object.keys(rates):[...HOSPS_DEFAULT];
+    hosps.forEach(h=>{if(!rates[h])rates[h]={with:700,without:800};});
+  }
+  setSyncBadge(ok?'ok':'err');
+  buildSelects(); renderRec(); renderAnalytics();
 }
+async function refreshAll(){await loadAll();}
+
+function setSyncBadge(s){
+  const b=document.getElementById('sync-badge');if(!b)return;
+  b.className='sync-dot s-'+s;
+  b.textContent=s==='ok'?'● 已連線':s==='ing'?'⏳ 同步中':'✕ 連線失敗';
+}
+
 function init(){
-  load()
-  const td=new Date().toISOString().slice(0,10)
-  document.getElementById('f-date').value=td
-  document.getElementById('fi-m').value=td.slice(0,7)
-  buildSels();segs=[];addSeg();renderRec();renderRates();renderNTags()
-}
-function buildSels(){
-  ['f-hosp','fi-h'].forEach(id=>{
-    const s=document.getElementById(id)
-    s.innerHTML=(id==='f-hosp'?'<option value="">— 請選擇院區 —</option>':'<option value="">全部</option>')+HOSPS.map(h=>`<option value="${h}">${h}</option>`).join('')
-  })
+  const today=new Date().toISOString().slice(0,10);
+  const m1=today.slice(0,8)+'01';
+  document.getElementById('f-date').value=today;
+  document.getElementById('fi-from').value=m1;
+  document.getElementById('fi-to').value=today;
+  document.getElementById('an-from').value=m1;
+  document.getElementById('an-to').value=today;
+  buildSelects(); segs=[]; addSeg(); loadAll();
 }
 
-// combo
-function openDrop(){renderDrop();document.getElementById('cdrop').classList.add('open')}
-function closeDrop(){document.getElementById('cdrop').classList.remove('open')}
-function filterDrop(){document.getElementById('f-name').value='';renderDrop();document.getElementById('cdrop').classList.add('open')}
-function renderDrop(){
-  const q=document.getElementById('ci').value.trim().toLowerCase()
-  const cur=document.getElementById('f-name').value
-  const list=pharmacists.filter(n=>n.toLowerCase().includes(q))
-  document.getElementById('cdrop').innerHTML=list.length
-    ?list.map(n=>`<div class="copt${n===cur?' sel':''}" onmousedown="pickName('${n}')">${n}</div>`).join('')
-    :'<div class="cempty">查無藥師</div>'
-}
-function pickName(n){
-  document.getElementById('ci').value=n
-  document.getElementById('f-name').value=n
-  document.getElementById('cdrop').classList.remove('open')
+function buildSelects(){
+  ['f-hosp','fi-h','an-hosp'].forEach(id=>{
+    const s=document.getElementById(id);if(!s)return;
+    const def=id==='f-hosp'?'<option value="">— 請選擇院區 —</option>':'<option value="">全部院區</option>';
+    s.innerHTML=def+hosps.map(h=>`<option value="${h}">${h}</option>`).join('');
+  });
 }
 
-// segs
+const cLists={ph:()=>pharmacists,rep:()=>reporters};
+const cIn={ph:'ci-ph',rep:'ci-rep'},cDrop={ph:'cd-ph',rep:'cd-rep'};
+const cHid={ph:'f-ph',rep:'f-rep'},cErr={ph:'e-ph',rep:'e-rep'};
+function openCombo(k){renderDrop(k);document.getElementById(cDrop[k]).classList.add('open')}
+function closeCombo(k){document.getElementById(cDrop[k]).classList.remove('open')}
+function filterCombo(k){document.getElementById(cHid[k]).value='';renderDrop(k);document.getElementById(cDrop[k]).classList.add('open')}
+function renderDrop(k){
+  const q=document.getElementById(cIn[k]).value.trim().toLowerCase();
+  const cur=document.getElementById(cHid[k]).value;
+  const fl=cLists[k]().filter(n=>String(n).toLowerCase().includes(q));
+  document.getElementById(cDrop[k]).innerHTML=fl.length
+    ?fl.map(n=>`<div class="combo-opt${n===cur?' selected':''}" onmousedown="selC('${k}','${n}')">${n}</div>`).join('')
+    :'<div class="combo-empty">查無人員</div>';
+}
+function selC(k,n){
+  document.getElementById(cIn[k]).value=n;document.getElementById(cHid[k]).value=n;
+  document.getElementById(cIn[k]).classList.remove('field-err');
+  document.getElementById(cErr[k]).classList.remove('show');
+  document.getElementById(cDrop[k]).classList.remove('open');
+}
+
+function showErr(fid,eid){const el=document.getElementById(fid);if(el)el.classList.add('field-err');document.getElementById(eid).classList.add('show')}
+function clearErr(fid,eid){const el=document.getElementById(fid);if(el)el.classList.remove('field-err');document.getElementById(eid).classList.remove('show')}
+
 function addSeg(){
-  if(segs.length>=3)return
-  segs.push({start:'',end:'',assist:'with'});renderSegs()
+  if(segs.length>=3)return;
+  segs.push({start:'',end:'',assist:'with'});renderSegs();
 }
-function delSeg(i){segs.splice(i,1);renderSegs();calcSum()}
+function delSeg(i){segs.splice(i,1);renderSegs();calcSum();}
 function renderSegs(){
-  document.getElementById('segs-wrap').innerHTML=segs.map((s,i)=>`
+  const wrap=document.getElementById('segs-wrap');
+  wrap.innerHTML=segs.map((s,i)=>`
     <div class="seg">
-      <div class="shdr">
-        <span class="stitle">第 ${i+1} 段班</span>
-        ${segs.length>1?`<button class="sdel" onclick="delSeg(${i})">移除</button>`:''}
+      <div class="seg-hdr">
+        <span class="seg-title">第 ${i+1} 段班</span>
+        ${segs.length>1?`<button class="seg-del" onclick="delSeg(${i})">✕ 移除</button>`:''}
       </div>
-      <div class="tr">
-        <div><label style="margin-bottom:5px">上班</label><input type="time" value="${s.start}" onchange="segs[${i}].start=this.value;calcSum()"/></div>
-        <div class="tsep">→</div>
-        <div><label style="margin-bottom:5px">下班</label><input type="time" value="${s.end}" onchange="segs[${i}].end=this.value;calcSum()"/></div>
+      <div class="time-grid">
+        <div><label style="margin-bottom:5px">上班時間</label>
+          <input type="time" id="t-s-${i}" value="${s.start}" step="60"
+            onchange="segs[${i}].start=this.value;calcSum();document.getElementById('e-segs').classList.remove('show')"/>
+        </div>
+        <div class="time-arrow">→</div>
+        <div><label style="margin-bottom:5px">下班時間</label>
+          <input type="time" id="t-e-${i}" value="${s.end}" step="60"
+            onchange="segs[${i}].end=this.value;calcSum();document.getElementById('e-segs').classList.remove('show')"/>
+        </div>
       </div>
-      <div class="rg">
+      <div class="assist-row">
         <div class="rb ${s.assist==='with'?'on':''}" onclick="segs[${i}].assist='with';renderSegs();calcSum()">有藥助</div>
         <div class="rb ${s.assist==='without'?'on':''}" onclick="segs[${i}].assist='without';renderSegs();calcSum()">無藥助</div>
       </div>
-    </div>`).join('')
-  document.getElementById('addseg-btn').style.display=segs.length>=3?'none':'block'
+    </div>`).join('');
+  segs.forEach((_,i)=>{
+    ['t-s-','t-e-'].forEach(p=>{
+      const el=document.getElementById(p+i);
+      if(el){el.step=60;el.setAttribute('step','60');}
+    });
+  });
+  document.getElementById('add-seg-btn').style.display=segs.length>=3?'none':'block';
 }
+
 function calcHrs(s,e){
-  if(!s||!e)return null
-  const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number)
-  let m=(eh*60+em)-(sh*60+sm);if(m<=0)m+=1440;return+(m/60).toFixed(2)
+  if(!s||!e)return null;
+  const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
+  let m=(eh*60+em)-(sh*60+sm);if(m<=0)m+=1440;
+  return+(m/60).toFixed(2);
 }
 function calcSum(){
-  const hosp=document.getElementById('f-hosp').value
-  const r=rates[hosp]||{with:700,without:800}
-  let total=0,any=false
-  segs.forEach(s=>{const h=calcHrs(s.start,s.end);if(!h)return;any=true;total+=Math.round(h*(s.assist==='with'?r.with:r.without))})
-  const bar=document.getElementById('sumbar')
-  if(!any||!hosp){bar.style.display='none';return}
-  bar.style.display='flex';document.getElementById('sumval').textContent='$'+total.toLocaleString()
+  const hosp=document.getElementById('f-hosp').value;
+  const r=rates[hosp]||{with:700,without:800};
+  const commission=Number(document.getElementById('f-commission').value)||0;
+  let salary=0,any=false;
+  segs.forEach(s=>{const h=calcHrs(s.start,s.end);if(!h)return;any=true;salary+=Math.round(h*(s.assist==='with'?r.with:r.without));});
+  const box=document.getElementById('summary');
+  if(!any||!hosp){box.style.display='none';return;}
+  box.style.display='flex';
+  document.getElementById('sum-total-val').textContent='$'+(salary+commission).toLocaleString();
 }
 
-// step 1→2
-function toConfirm(){
-  const date=document.getElementById('f-date').value
-  const hosp=document.getElementById('f-hosp').value
-  const name=document.getElementById('f-name').value.trim()
-  if(!date||!hosp||!name){alert('請填寫日期、院區，並選擇藥師姓名');return}
-  const r=rates[hosp]||{with:700,without:800}
-  let segData=[],total=0
+function goConfirm(){
+  let valid=true;
+  const date=document.getElementById('f-date').value;
+  const hosp=document.getElementById('f-hosp').value;
+  const ph=document.getElementById('f-ph').value.trim();
+  const rep=document.getElementById('f-rep').value.trim();
+  const commV=document.getElementById('f-commission').value;
+  if(!date){showErr('f-date','e-date');valid=false;}else clearErr('f-date','e-date');
+  if(!hosp){showErr('f-hosp','e-hosp');valid=false;}else clearErr('f-hosp','e-hosp');
+  if(!ph){showErr('ci-ph','e-ph');valid=false;}else clearErr('ci-ph','e-ph');
+  if(!rep){showErr('ci-rep','e-rep');valid=false;}else clearErr('ci-rep','e-rep');
+  if(commV===''){showErr('f-commission','e-commission');valid=false;}else clearErr('f-commission','e-commission');
+  const r=rates[hosp]||{with:700,without:800};
+  let segData=[],salary=0;
   segs.forEach((s,i)=>{
-    const hrs=calcHrs(s.start,s.end);if(!hrs)return
-    const rate=s.assist==='with'?r.with:r.without
-    const amt=Math.round(hrs*rate);total+=amt
-    segData.push({seg:i+1,start:s.start,end:s.end,assist:s.assist,hrs,rate,amt})
-  })
-  if(!segData.length){alert('請至少填寫一段班的時間');return}
-  pending={date,hosp,name,segs:segData,total}
-
-  const now=new Date(),p=n=>String(n).padStart(2,'0')
-  document.getElementById('rc-time').textContent=`填報時間：${now.getFullYear()}/${p(now.getMonth()+1)}/${p(now.getDate())} ${p(now.getHours())}:${p(now.getMinutes())}`
-  document.getElementById('rc-hosp').textContent=hosp
-  document.getElementById('rc-name').textContent=name
-  document.getElementById('rc-date').textContent=date
-  document.getElementById('rc-total').textContent='$'+total.toLocaleString()
-  document.getElementById('rc-segs').innerHTML=
-    `<div class="seg-head-lbl">班別明細</div>`+
-    segData.map((s,i)=>`
-      ${i>0?'<hr class="rdiv"/>':''}
-      <div class="rseg">
-        <span class="rsegl">
-          第 ${s.seg} 段 &nbsp; ${s.start} – ${s.end}
-          <span class="badge ${s.assist==='with'?'by':'bn'}">${s.assist==='with'?'有藥助':'無藥助'}</span>
-        </span>
-        <span class="rsegr">${s.hrs} hr × $${s.rate} = <strong>$${s.amt.toLocaleString()}</strong></span>
-      </div>`).join('')
-
-  document.getElementById('view-form').style.display='none'
-  document.getElementById('view-confirm').style.display='block'
-  window.scrollTo({top:0,behavior:'smooth'})
+    const hrs=calcHrs(s.start,s.end);if(!hrs)return;
+    const rate=s.assist==='with'?r.with:r.without;
+    const amt=Math.round(hrs*rate);salary+=amt;
+    segData.push({seg:i+1,start:s.start,end:s.end,assist:s.assist,hrs,rate,amt});
+  });
+  if(!segData.length){document.getElementById('e-segs').classList.add('show');valid=false;}
+  else document.getElementById('e-segs').classList.remove('show');
+  if(!valid)return;
+  const commission=Number(commV)||0;
+  const grandTotal=salary+commission;
+  pending={date,hosp,ph,rep,segs:segData,salaryTotal:salary,commission,total:grandTotal};
+  document.getElementById('rc-date').textContent=date;
+  document.getElementById('rc-hosp').textContent=hosp;
+  document.getElementById('rc-ph').textContent=ph;
+  document.getElementById('rc-rep').textContent=rep;
+  document.getElementById('rc-sub').textContent='填報時間：'+new Date().toLocaleString('zh-TW',{hour12:false});
+  document.getElementById('rc-segs').innerHTML=segData.map(s=>`
+    <div class="seg-line">
+      <span class="sl-l">第${s.seg}段　${s.start}–${s.end}　<span class="badge ${s.assist==='with'?'by':'bn'}">${s.assist==='with'?'有藥助':'無藥助'}</span>　${s.hrs}hr×$${s.rate}</span>
+      <span class="sl-r">$${s.amt.toLocaleString()}</span>
+    </div>`).join('');
+  document.getElementById('rc-salary').textContent='$'+salary.toLocaleString();
+  document.getElementById('rc-commission').textContent='$'+commission.toLocaleString();
+  document.getElementById('rc-total').textContent='$'+grandTotal.toLocaleString();
+  document.getElementById('step-form').style.display='none';
+  document.getElementById('step-confirm').style.display='block';
 }
-function toForm(){
-  document.getElementById('view-form').style.display='block'
-  document.getElementById('view-confirm').style.display='none'
-  pending=null
+function goBack(){
+  document.getElementById('step-confirm').style.display='none';
+  document.getElementById('step-form').style.display='block';
 }
-function doSubmit(){
-  if(!pending)return
-  records.push({id:Date.now(),...pending});save()
-  const t=document.getElementById('toast');t.style.display='block'
+
+async function submitForm(){
+  if(!pending)return;
+  const btn=document.getElementById('btn-submit');
+  btn.disabled=true;btn.textContent='寫入中...';
+  const row={
+    id:Date.now(),date:pending.date,hosp:pending.hosp,ph:pending.ph,rep:pending.rep,
+    segCount:pending.segs.length,segDetail:JSON.stringify(pending.segs),
+    totalHrs:pending.segs.reduce((s,sg)=>s+sg.hrs,0).toFixed(2),
+    salaryTotal:pending.salaryTotal,commission:pending.commission,grandTotal:pending.total
+  };
+  const res=await api({action:'append',row:JSON.stringify(row)});
+  btn.disabled=false;btn.textContent='確認送出';
+  if(!res||res.error){
+    document.getElementById('toast-err').style.display='block';
+    setTimeout(()=>document.getElementById('toast-err').style.display='none',4000);
+    return;
+  }
+  records.push({...pending,id:row.id});pending=null;
+  document.getElementById('toast-ok').style.display='block';
   setTimeout(()=>{
-    t.style.display='none'
-    document.getElementById('ci').value=''
-    document.getElementById('f-name').value=''
-    document.getElementById('f-hosp').value=''
-    segs=[];addSeg()
-    document.getElementById('sumbar').style.display='none'
-    document.getElementById('view-confirm').style.display='none'
-    document.getElementById('view-form').style.display='block'
-    pending=null;renderRec()
-    window.scrollTo({top:0,behavior:'smooth'})
-  },1800)
+    document.getElementById('toast-ok').style.display='none';
+    document.getElementById('step-confirm').style.display='none';
+    document.getElementById('step-form').style.display='block';
+    ['ci-ph','ci-rep'].forEach(id=>document.getElementById(id).value='');
+    ['f-ph','f-rep','f-commission'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-hosp').value='';
+    segs=[];addSeg();
+    document.getElementById('summary').style.display='none';
+  },2000);
+  renderRec();renderAnalytics();
 }
 
-// nav
 function go(p){
   ['front','admin'].forEach((id,i)=>{
-    document.getElementById('pg-'+id).classList.toggle('on',id===p)
-    document.querySelectorAll('.nb')[i].classList.toggle('on',id===p)
-  })
-  window.scrollTo({top:0,behavior:'smooth'})
+    document.getElementById('pg-'+id).classList.toggle('on',id===p);
+    document.querySelectorAll('.nb')[i].classList.toggle('on',id===p);
+  });
 }
-
-// lock
 function unlock(){
   if(document.getElementById('pw-in').value===pw){
-    document.getElementById('lock').style.display='none'
-    document.getElementById('adm-body').style.display='block'
-    document.getElementById('pw-err').style.display='none'
-    document.getElementById('pw-in').value=''
-  }else document.getElementById('pw-err').style.display='block'
+    document.getElementById('lock').style.display='none';
+    document.getElementById('adm-body').style.display='block';
+    document.getElementById('pw-err').style.display='none';
+    document.getElementById('pw-in').value='';
+    renderRec();renderAnalytics();
+  }else{document.getElementById('pw-err').style.display='block';}
 }
-function lockout(){document.getElementById('lock').style.display='flex';document.getElementById('adm-body').style.display='none'}
-
-// admin tabs
+function lockout(){document.getElementById('lock').style.display='flex';document.getElementById('adm-body').style.display='none';}
 function atab(t){
-  ['rec','rate','names'].forEach((id,i)=>{
-    document.getElementById('atab-'+id).style.display=id===t?'block':'none'
-    document.querySelectorAll('.tab')[i].classList.toggle('on',id===t)
-  })
+  ['rec','analytics','settings'].forEach((id,i)=>{
+    document.getElementById('atab-'+id).style.display=id===t?'block':'none';
+    document.querySelectorAll('.tab-btn')[i].classList.toggle('on',id===t);
+  });
+  if(t==='analytics')renderAnalytics();
 }
 
-// records
-function getFil(){
-  const fh=document.getElementById('fi-h').value,fm=document.getElementById('fi-m').value,fn=document.getElementById('fi-n').value.trim()
-  return records.filter(r=>(!fh||r.hosp===fh)&&(!fm||r.date.startsWith(fm))&&(!fn||r.name.includes(fn)))
+function getFiltered(){
+  const fh=document.getElementById('fi-h').value;
+  const from=document.getElementById('fi-from').value;
+  const to=document.getElementById('fi-to').value;
+  const fn=document.getElementById('fi-n').value.trim();
+  return records.filter(r=>(!fh||r.hosp===fh)&&(!from||r.date>=from)&&(!to||r.date<=to)&&(!fn||r.ph.includes(fn)));
 }
 function renderRec(){
-  const fm=document.getElementById('fi-m').value
-  const mR=records.filter(r=>r.date.startsWith(fm))
-  document.getElementById('s-cnt').textContent=mR.length
-  document.getElementById('s-hrs').textContent=mR.reduce((s,r)=>s+r.segs.reduce((a,sg)=>a+sg.hrs,0),0).toFixed(1)+' hr'
-  document.getElementById('s-amt').textContent='$'+mR.reduce((s,r)=>s+r.total,0).toLocaleString()
-  const f=getFil(),wrap=document.getElementById('rec-wrap')
-  if(!f.length){wrap.innerHTML='<div class="empty">尚無符合記錄</div>';return}
-  const sumT=f.reduce((s,r)=>s+r.total,0)
+  const today=new Date().toISOString().slice(0,10);
+  const m1=today.slice(0,8)+'01';
+  const mR=records.filter(r=>r.date>=m1&&r.date<=today);
+  document.getElementById('s-cnt').textContent=mR.length;
+  document.getElementById('s-hrs').textContent=mR.reduce((s,r)=>s+(r.segs||[]).reduce((a,sg)=>a+sg.hrs,0),0).toFixed(1)+' hr';
+  document.getElementById('s-amt').textContent='$'+mR.reduce((s,r)=>s+r.total,0).toLocaleString();
+  const f=getFiltered(),wrap=document.getElementById('rec-wrap');
+  if(!f.length){wrap.innerHTML='<div class="empty-msg">尚無符合記錄</div>';return;}
+  const sumT=f.reduce((s,r)=>s+r.total,0);
   wrap.innerHTML=`<div style="overflow-x:auto"><table><thead><tr>
-    <th>日期</th><th>院區</th><th>藥師</th><th>班別時段</th><th>薪資</th><th></th>
+    <th>日期</th><th>院區</th><th>藥師</th><th>櫃台</th><th>班別</th><th>薪資</th><th>抽成</th><th>合計</th><th></th>
   </tr></thead><tbody>${f.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`<tr>
-    <td style="white-space:nowrap">${r.date}</td><td>${r.hosp}</td><td>${r.name}</td>
-    <td><div class="segsum">${r.segs.map(s=>`段${s.seg} ${s.start}–${s.end} <span class="badge ${s.assist==='with'?'by':'bn'}">${s.assist==='with'?'有':'無'}藥助</span> ${s.hrs}hr×$${s.rate}`).join('<br>')}</div></td>
-    <td style="font-weight:700;white-space:nowrap;color:#0f6e56">$${r.total.toLocaleString()}</td>
-    <td><button class="delbtn" onclick="delRec(${r.id})">✕</button></td>
+    <td>${r.date}</td><td>${r.hosp}</td><td>${r.ph}</td><td>${r.rep||'—'}</td>
+    <td><div class="segs-cell">${(r.segs||[]).map(s=>`段${s.seg} ${s.start}–${s.end} <span class="badge ${s.assist==='with'?'by':'bn'}">${s.assist==='with'?'有':'無'}藥助</span> ${s.hrs}hr`).join('<br>')}</div></td>
+    <td>$${(r.salaryTotal||0).toLocaleString()}</td>
+    <td>$${(r.commission||0).toLocaleString()}</td>
+    <td style="font-weight:700;color:#0F6E56">$${r.total.toLocaleString()}</td>
+    <td><button class="del-btn" onclick="delRec('${r.id}')">✕</button></td>
   </tr>`).join('')}</tbody>
-  <tfoot><tr>
-    <td colspan="4" style="text-align:right;font-size:12px;color:#aaa;padding-top:10px;font-weight:500">篩選合計</td>
-    <td style="font-weight:700;padding-top:10px;color:#0f6e56">$${sumT.toLocaleString()}</td><td></td>
-  </tr></tfoot></table></div>`
+  <tfoot><tr><td colspan="7" style="text-align:right;font-size:12px;color:#888;padding-top:10px">篩選合計</td>
+  <td style="font-weight:700;padding-top:10px;color:#0F6E56">$${sumT.toLocaleString()}</td><td></td></tr></tfoot>
+  </table></div>`;
 }
-function delRec(id){if(!confirm('確定刪除此筆記錄？'))return;records=records.filter(r=>r.id!==id);save();renderRec()}
-function clearFi(){document.getElementById('fi-h').value='';document.getElementById('fi-m').value=new Date().toISOString().slice(0,7);document.getElementById('fi-n').value='';renderRec()}
+async function delRec(id){
+  if(!confirm('確定刪除此筆記錄？'))return;
+  const res=await api({action:'delete',id});
+  if(!res||res.error){alert('刪除失敗');return;}
+  records=records.filter(r=>String(r.id)!==String(id));
+  renderRec();renderAnalytics();
+}
+function clearFi(){
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('fi-h').value='';
+  document.getElementById('fi-from').value=today.slice(0,8)+'01';
+  document.getElementById('fi-to').value=today;
+  document.getElementById('fi-n').value='';
+  renderRec();
+}
 function exportCSV(){
-  const f=getFil();if(!f.length){alert('無資料可匯出');return}
-  const hdr='日期,院區,藥師,段別,上班,下班,工時(hr),藥助,時薪,段薪資,當日合計'
-  const rows=[];f.forEach(r=>{r.segs.forEach((s,i)=>rows.push(`${r.date},${r.hosp},${r.name},第${s.seg}段,${s.start},${s.end},${s.hrs},${s.assist==='with'?'有':'無'},${s.rate},${s.amt},${i===0?r.total:''}`))})
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+[hdr,...rows].join('\n')],{type:'text/csv;charset=utf-8'}));a.download=`薪資紀錄_${new Date().toISOString().slice(0,10)}.csv`;a.click()
+  const f=getFiltered();if(!f.length){alert('無資料可匯出');return;}
+  const hdr='日期,院區,支援藥師,櫃台人員,段別,上班,下班,工時(hr),藥助,時薪,段薪資,薪資小計,商品抽成,應付合計';
+  const rows=[];
+  f.forEach(r=>{(r.segs||[]).forEach((s,i)=>{
+    rows.push(`${r.date},${r.hosp},${r.ph},${r.rep||''},第${s.seg}段,${s.start},${s.end},${s.hrs},${s.assist==='with'?'有':'無'},${s.rate},${s.amt},${i===0?r.salaryTotal:''},${i===0?r.commission:''},${i===0?r.total:''}`);
+  });});
+  const csv='\uFEFF'+[hdr,...rows].join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`薪資紀錄_${new Date().toISOString().slice(0,10)}.csv`;a.click();
 }
 
-// rates
-function renderRates(){
-  document.getElementById('rates-list').innerHTML=HOSPS.map(h=>`
-    <div class="rrow"><span>${h}</span>
-      <input type="number" id="rw-${h}" value="${(rates[h]||{}).with||700}" min="0" step="50"/>
-      <input type="number" id="rwo-${h}" value="${(rates[h]||{}).without||800}" min="0" step="50"/>
-    </div>`).join('')
+function getAnFiltered(){
+  const from=document.getElementById('an-from').value;
+  const to=document.getElementById('an-to').value;
+  const hosp=document.getElementById('an-hosp').value;
+  return records.filter(r=>(!hosp||r.hosp===hosp)&&(!from||r.date>=from)&&(!to||r.date<=to));
 }
-function saveRates(){HOSPS.forEach(h=>{rates[h]={with:+document.getElementById('rw-'+h).value||0,without:+document.getElementById('rwo-'+h).value||0}});save();alert('費率已儲存！')}
-function changePw(){const v=document.getElementById('new-pw').value.trim();if(!v){alert('請輸入新密碼');return}pw=v;save();document.getElementById('new-pw').value='';alert('密碼已更新！')}
-
-// names
-function renderNTags(){
-  const el=document.getElementById('ntags')
-  el.innerHTML=pharmacists.length?pharmacists.map((n,i)=>`<div class="ntag">${n}<button onclick="removeName(${i})">✕</button></div>`).join(''):'<span style="font-size:13px;color:#aaa">尚無藥師，請新增</span>'
+function resetAnalytics(){
+  const today=new Date().toISOString().slice(0,10);
+  document.getElementById('an-from').value=today.slice(0,8)+'01';
+  document.getElementById('an-to').value=today;
+  document.getElementById('an-hosp').value='';
+  renderAnalytics();
 }
-function addName(){const v=document.getElementById('new-name').value.trim();if(!v)return;if(pharmacists.includes(v)){alert('已存在此藥師');return}pharmacists.push(v);save();document.getElementById('new-name').value='';renderNTags()}
-function removeName(i){if(!confirm(`確定移除「${pharmacists[i]}」？`))return;pharmacists.splice(i,1);save();renderNTags()}
+function renderAnalytics(){
+  const f=getAnFiltered();
+  const tAmt=f.reduce((s,r)=>s+r.total,0);
+  const tSal=f.reduce((s,r)=>s+(r.salaryTotal||0),0);
+  const tCom=f.reduce((s,r)=>s+(r.commission||0),0);
+  const tHrs=f.reduce((s,r)=>s+(r.segs||[]).reduce((a,sg)=>a+sg.hrs,0),0);
+  document.getElementById('an-cnt').textContent=f.length;
+  document.getElementById('an-hrs').textContent=tHrs.toFixed(1)+' hr';
+  document.getElementById('an-salary').textContent='$'+tSal.toLocaleString();
+  document.getElementById('an-commission').textContent='$'+tCom.toLocaleString();
+  document.getElementById('an-amt').textContent='$'+tAmt.toLocaleString();
+  document.getElementById('an-avg').textContent=f.length?'$'+Math.round(tAmt/f.length).toLocaleString():'$0';
+  const hM={};f.forEach(r=>{hM[r.hosp]=(hM[r.hosp]||0)+r.total;});
+  const hA=Object.entries(hM).sort((a,b)=>b[1]-a[1]);const hX=hA[0]?hA[0][1]:1;
+  document.getElementById('chart-hosp').innerHTML=hA.length
+    ?hA.map(([h,v])=>`<div class="bar-row"><span class="bar-lbl">${h}</span><div class="bar-bg"><div class="bar-fill" style="width:${Math.max(2,v/hX*100).toFixed(1)}%">$${v.toLocaleString()}</div></div></div>`).join('')
+    :'<div class="empty-msg">無資料</div>';
+  const pM={};f.forEach(r=>{pM[r.ph]=(pM[r.ph]||0)+r.total;});
+  const pA=Object.entries(pM).sort((a,b)=>b[1]-a[1]);const pX=pA[0]?pA[0][1]:1;
+  document.getElementById('chart-ph').innerHTML=pA.length
+    ?pA.map(([n,v])=>`<div class="bar-row"><span class="bar-lbl">${n}</span><div class="bar-bg"><div class="bar-fill" style="width:${Math.max(2,v/pX*100).toFixed(1)}%">$${v.toLocaleString()}</div></div></div>`).join('')
+    :'<div class="empty-msg">無資料</div>';
+  let wH=0,woH=0;
+  f.forEach(r=>(r.segs||[]).forEach(s=>{if(s.assist==='with')wH+=s.hrs;else woH+=s.hrs;}));
+  const tH=wH+woH||1;const wP=Math.round(wH/tH*100),woP=100-wP;
+  document.getElementById('chart-assist').innerHTML=`
+    <div class="assist-bar">
+      <div style="width:${wP}%;background:#1D9E75;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600">${wP>8?wP+'%':''}</div>
+      <div style="width:${woP}%;background:#F59E0B;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:600">${woP>8?woP+'%':''}</div>
+    </div>
+    <div class="legend-row">
+      <span><span class="legend-dot" style="background:#1D9E75"></span>有藥助 ${wH.toFixed(1)}hr（${wP}%）</span>
+      <span><span class="legend-dot" style="background:#F59E0B"></span>無藥助 ${woH.toFixed(1)}hr（${woP}%）</span>
+    </div>`;
+}
 
-init()
+async function changePw(){
+  const v=document.getElementById('new-pw').value.trim();
+  if(!v){alert('請輸入新密碼');return;}
+  pw=v;await api({action:'setConfig',key:'pw',value:pw});
+  document.getElementById('new-pw').value='';alert('密碼已更新！');
+}
+
+init();
 </script>
 </body>
 </html>
