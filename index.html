@@ -293,7 +293,6 @@ tr:hover td{background:#fafafa}
           <div class="stat-card"><div class="stat-lbl">薪資合計</div><div class="stat-val" id="an-salary">$0</div></div>
           <div class="stat-card"><div class="stat-lbl">抽成合計</div><div class="stat-val" id="an-commission">$0</div></div>
           <div class="stat-card"><div class="stat-lbl">應付合計</div><div class="stat-val" id="an-amt">$0</div></div>
-          <div class="stat-card"><div class="stat-lbl">平均每筆</div><div class="stat-val" id="an-avg">$0</div></div>
         </div>
         <div class="card"><div class="ct">各院區應付合計</div><div class="bar-chart" id="chart-hosp"></div></div>
         <div class="card"><div class="ct">各藥師應付合計</div><div class="bar-chart" id="chart-ph"></div></div>
@@ -825,7 +824,6 @@ function renderAnalytics(){
   document.getElementById('an-salary').textContent='$'+tSal.toLocaleString();
   document.getElementById('an-commission').textContent='$'+tCom.toLocaleString();
   document.getElementById('an-amt').textContent='$'+tAmt.toLocaleString();
-  document.getElementById('an-avg').textContent=f.length?'$'+Math.round(tAmt/f.length).toLocaleString():'$0';
   const hM={};f.forEach(r=>{hM[r.hosp]=(hM[r.hosp]||0)+r.total;});
   const hA=Object.entries(hM).sort((a,b)=>b[1]-a[1]);const hX=hA[0]?hA[0][1]:1;
   document.getElementById('chart-hosp').innerHTML=hA.length
