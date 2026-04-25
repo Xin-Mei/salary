@@ -419,17 +419,36 @@ function syncSegsFromDOM(){
   });
 }
 
-/* 格式化輸入：接受 HH:MM、HHMM、HMM（如730→07:30），輸出 HH:MM */
+/* 格式化輸入：支援 730→07:30 / 0730→07:30 / 1400→14:00 / 7:30→07:30 */
 function formatTimeInput(v){
   if(!v) return '';
   v=v.trim().replace(/：/g,':').replace(/\s/g,'');
-  // 純數字 3碼(730)→補0→0730，4碼(1400)直接處理
-  if(/^\d{3}$/.test(v)) v='0'+v;
-  if(/^\d{4}$/.test(v)) v=v.slice(0,2)+':'+v.slice(2);
-  // HH:MM 或 H:MM
-  if(/^\d{1,2}:\d{2}$/.test(v)){
-    const[h,m]=v.split(':').map(Number);
-    if(h>=0&&h<=23&&m>=0&&m<=59) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+  const digits=v.replace(/:/g,'');
+  // 純數字處理
+  if(/^\d+$/.test(digits) && !v.includes(':')){
+    if(digits.length===3){
+      // 730 → h=7, m=30
+      const h=Number(digits[0]), m=Number(digits.slice(1));
+      if(h>=0&&h<=9&&m>=0&&m<=59) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+    }
+    if(digits.length===4){
+      // 0730 or 1400
+      const h=Number(digits.slice(0,2)), m=Number(digits.slice(2));
+      if(h>=0&&h<=23&&m>=0&&m<=59) return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+    }
+    if(digits.length===1||digits.length===2){
+      // 只有小時數字，不格式化
+      return '';
+    }
+  }
+  // 含冒號：H:MM 或 HH:MM
+  if(v.includes(':')){
+    const parts=v.split(':');
+    if(parts.length===2){
+      const h=Number(parts[0]), m=Number(parts[1]);
+      if(!isNaN(h)&&!isNaN(m)&&h>=0&&h<=23&&m>=0&&m<=59)
+        return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+    }
   }
   return '';
 }
@@ -502,17 +521,16 @@ function onTimeBlur(i, field, val){
   if(fmt) calcSum();
 }
 
-/* 自動在輸入第2位數字後加冒號，方便輸入 */
+/* 輸入過程不干擾，離開欄位（blur）才格式化 */
 function onTimeInput(i, field, val){
-  // 自動插入冒號：輸入到第2碼且無冒號時補上
-  let v=val.replace(/[^0-9:]/g,'');
-  if(v.length===2&&!v.includes(':')) v=v+':';
+  // 只允許數字和冒號，其他字元移除
+  const v=val.replace(/[^0-9:]/g,'');
   const el=document.getElementById(field==='start'?'t-s-'+i:'t-e-'+i);
-  if(el&&v!==val){ el.value=v; }
+  if(el&&v!==val) el.value=v;
   segs[i][field]=v;
+  // 嘗試格式化，若成功才更新薪資預覽
   const fmt=formatTimeInput(v);
-  if(fmt) segs[i][field]=fmt;
-  calcSum();
+  if(fmt){ segs[i][field]=fmt; calcSum(); }
   document.getElementById('e-segs').classList.remove('show');
 }
 
