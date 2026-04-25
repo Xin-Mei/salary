@@ -341,7 +341,14 @@ async function loadAll(){
       segs:(()=>{try{return JSON.parse(r['段別明細']||'[]');}catch(e){return [];}})(),
       salaryTotal:Number(r['薪資合計'])||0,
       commission:Number(r['商品抽成'])||0,
-      total:Number(r['應付合計'])||0
+      // 應付合計：優先讀「應付合計」欄，若為空則用薪資合計+商品抽成加總
+      total:(()=>{
+        const t=Number(r['應付合計']);
+        if(t) return t;
+        const s=Number(r['薪資合計'])||0;
+        const c=Number(r['商品抽成'])||0;
+        return s+c||s; // 有薪資就加總，否則直接用薪資
+      })()
     })).filter(r=>r.date&&r.date.length===10);
   }
   if(!cR||cR.error){ok=false;}
