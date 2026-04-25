@@ -131,7 +131,7 @@ tr:hover td{background:#fafafa}
     <button class="nb on" onclick="go('front')">前台 — 薪資填報</button>
     <button class="nb" onclick="go('admin')">後台 — 管理後台</button>
   </div>
- 
+
   <div id="pg-front" class="pg on">
     <div id="step-form">
       <div class="card">
@@ -189,7 +189,7 @@ tr:hover td{background:#fafafa}
         <button class="btn-main" onclick="goConfirm()">預覽確認 →</button>
       </div>
     </div>
- 
+
     <div id="step-confirm" style="display:none">
       <div class="receipt">
         <div class="rh-hdr">
@@ -224,7 +224,7 @@ tr:hover td{background:#fafafa}
       <div class="toast err" id="toast-err">✕ 寫入失敗，請稍後重試</div>
     </div>
   </div>
- 
+
   <div id="pg-admin" class="pg" style="position:relative;min-height:500px">
     <div class="lock-wrap" id="lock">
       <div style="font-size:40px">🔒</div>
@@ -248,7 +248,7 @@ tr:hover td{background:#fafafa}
         <button class="btn-sm" onclick="refreshAll()" style="color:#1D9E75;border-color:#1D9E75">↻ 同步</button>
         <button class="btn-sm" onclick="lockout()">登出</button>
       </div>
- 
+
       <div id="atab-rec">
         <div class="stat-grid">
           <div class="stat-card"><div class="stat-lbl">本月筆數</div><div class="stat-val" id="s-cnt">0</div></div>
@@ -267,7 +267,7 @@ tr:hover td{background:#fafafa}
           <div id="rec-wrap"><div class="empty-msg">載入中...</div></div>
         </div>
       </div>
- 
+
       <div id="atab-analytics" style="display:none">
         <div class="card">
           <div class="ct" style="margin-bottom:.8rem">統計篩選</div>
@@ -290,7 +290,7 @@ tr:hover td{background:#fafafa}
         <div class="card"><div class="ct">各藥師應付合計</div><div class="bar-chart" id="chart-ph"></div></div>
         <div class="card"><div class="ct">有藥助 vs 無藥助工時比例</div><div id="chart-assist" style="margin-top:.8rem"></div></div>
       </div>
- 
+
       <div id="atab-settings" style="display:none">
         <div class="card">
           <div class="ct">修改後台密碼</div>
@@ -301,13 +301,13 @@ tr:hover td{background:#fafafa}
     </div>
   </div>
 </div>
- 
+
 <script>
 const GAS = 'https://script.google.com/macros/s/AKfycbx0yG9IzlalB4vXrM2VO_NTgZu6I8rTlF4mP4nmGTkxt5RdZX250rJdBS4bxOr6xGup/exec';
 const HOSPS_DEFAULT = ['鶯歌','三樹','桃園','土城','八德','龍潭','大溪','大竹','大湳','平鎮','埔心','觀音','龍岡','大園'];
 let records=[], rates={}, pw='admin123', pharmacists=[], reporters=[], segs=[], pending=null;
 let hosps=[...HOSPS_DEFAULT];
- 
+
 function api(params){
   return new Promise(resolve=>{
     const cb='cb_'+Date.now()+'_'+Math.random().toString(36).slice(2);
@@ -320,7 +320,7 @@ function api(params){
     s.src=url; document.head.appendChild(s);
   });
 }
- 
+
 async function loadAll(){
   setSyncBadge('ing');
   const [rR,cR]=await Promise.all([api({action:'getAll'}),api({action:'getConfig'})]);
@@ -346,13 +346,13 @@ async function loadAll(){
   buildSelects(); renderRec(); renderAnalytics();
 }
 async function refreshAll(){await loadAll();}
- 
+
 function setSyncBadge(s){
   const b=document.getElementById('sync-badge');if(!b)return;
   b.className='sync-dot s-'+s;
   b.textContent=s==='ok'?'● 已連線':s==='ing'?'⏳ 同步中':'✕ 連線失敗';
 }
- 
+
 function init(){
   const today=new Date().toISOString().slice(0,10);
   const m1=today.slice(0,8)+'01';
@@ -363,7 +363,7 @@ function init(){
   document.getElementById('an-to').value=today;
   buildSelects(); segs=[]; addSeg(); loadAll();
 }
- 
+
 function buildSelects(){
   ['f-hosp','fi-h','an-hosp'].forEach(id=>{
     const s=document.getElementById(id);if(!s)return;
@@ -371,7 +371,7 @@ function buildSelects(){
     s.innerHTML=def+hosps.map(h=>`<option value="${h}">${h}</option>`).join('');
   });
 }
- 
+
 const cLists={ph:()=>pharmacists,rep:()=>reporters};
 const cIn={ph:'ci-ph',rep:'ci-rep'},cDrop={ph:'cd-ph',rep:'cd-rep'};
 const cHid={ph:'f-ph',rep:'f-rep'},cErr={ph:'e-ph',rep:'e-rep'};
@@ -392,19 +392,48 @@ function selC(k,n){
   document.getElementById(cErr[k]).classList.remove('show');
   document.getElementById(cDrop[k]).classList.remove('open');
 }
- 
+
 function showErr(fid,eid){const el=document.getElementById(fid);if(el)el.classList.add('field-err');document.getElementById(eid).classList.add('show')}
 function clearErr(fid,eid){const el=document.getElementById(fid);if(el)el.classList.remove('field-err');document.getElementById(eid).classList.remove('show')}
- 
+
 function addSeg(){
   if(segs.length>=3)return;
-  segs.push({start:'',end:'',assist:'with'});renderSegs();
+  // 先把現有輸入框的值存回 segs，避免新增時段觸發 renderSegs 清空已填資料
+  syncSegsFromDOM();
+  segs.push({start:'',end:'',assist:'with'});
+  renderSegs();
 }
-function delSeg(i){segs.splice(i,1);renderSegs();calcSum();}
+function delSeg(i){
+  syncSegsFromDOM();
+  segs.splice(i,1);
+  renderSegs(); calcSum();
+}
+
+/* 把 DOM 目前的時間值同步回 segs 陣列 */
+function syncSegsFromDOM(){
+  segs.forEach((_,i)=>{
+    const s=document.getElementById('t-s-'+i);
+    const e=document.getElementById('t-e-'+i);
+    if(s) segs[i].start=s.value;
+    if(e) segs[i].end=e.value;
+  });
+}
+
+/* 切換藥助：只更新樣式，不重建 DOM */
+function setAssist(i, val){
+  segs[i].assist=val;
+  const row=document.getElementById('assist-row-'+i);
+  if(!row) return;
+  row.querySelectorAll('.rb').forEach(btn=>{
+    btn.classList.toggle('on', btn.dataset.val===val);
+  });
+  calcSum();
+}
+
 function renderSegs(){
   const wrap=document.getElementById('segs-wrap');
   wrap.innerHTML=segs.map((s,i)=>`
-    <div class="seg">
+    <div class="seg" id="seg-${i}">
       <div class="seg-hdr">
         <span class="seg-title">第 ${i+1} 段班</span>
         ${segs.length>1?`<button class="seg-del" onclick="delSeg(${i})">✕ 移除</button>`:''}
@@ -420,9 +449,9 @@ function renderSegs(){
             onchange="segs[${i}].end=this.value;calcSum();document.getElementById('e-segs').classList.remove('show')"/>
         </div>
       </div>
-      <div class="assist-row">
-        <div class="rb ${s.assist==='with'?'on':''}" onclick="segs[${i}].assist='with';renderSegs();calcSum()">有藥助</div>
-        <div class="rb ${s.assist==='without'?'on':''}" onclick="segs[${i}].assist='without';renderSegs();calcSum()">無藥助</div>
+      <div class="assist-row" id="assist-row-${i}">
+        <div class="rb ${s.assist==='with'?'on':''}" data-val="with" onclick="setAssist(${i},'with')">有藥助</div>
+        <div class="rb ${s.assist==='without'?'on':''}" data-val="without" onclick="setAssist(${i},'without')">無藥助</div>
       </div>
     </div>`).join('');
   segs.forEach((_,i)=>{
@@ -433,7 +462,7 @@ function renderSegs(){
   });
   document.getElementById('add-seg-btn').style.display=segs.length>=3?'none':'block';
 }
- 
+
 function calcHrs(s,e){
   if(!s||!e)return null;
   const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
@@ -451,7 +480,7 @@ function calcSum(){
   box.style.display='flex';
   document.getElementById('sum-total-val').textContent='$'+(salary+commission).toLocaleString();
 }
- 
+
 function goConfirm(){
   let valid=true;
   const date=document.getElementById('f-date').value;
@@ -498,7 +527,7 @@ function goBack(){
   document.getElementById('step-confirm').style.display='none';
   document.getElementById('step-form').style.display='block';
 }
- 
+
 async function submitForm(){
   if(!pending)return;
   const btn=document.getElementById('btn-submit');
@@ -530,7 +559,7 @@ async function submitForm(){
   },2000);
   renderRec();renderAnalytics();
 }
- 
+
 function go(p){
   ['front','admin'].forEach((id,i)=>{
     document.getElementById('pg-'+id).classList.toggle('on',id===p);
@@ -554,7 +583,7 @@ function atab(t){
   });
   if(t==='analytics')renderAnalytics();
 }
- 
+
 function getFiltered(){
   const fh=document.getElementById('fi-h').value;
   const from=document.getElementById('fi-from').value;
@@ -613,7 +642,7 @@ function exportCSV(){
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
   a.download=`薪資紀錄_${new Date().toISOString().slice(0,10)}.csv`;a.click();
 }
- 
+
 function getAnFiltered(){
   const from=document.getElementById('an-from').value;
   const to=document.getElementById('an-to').value;
@@ -662,14 +691,14 @@ function renderAnalytics(){
       <span><span class="legend-dot" style="background:#F59E0B"></span>無藥助 ${woH.toFixed(1)}hr（${woP}%）</span>
     </div>`;
 }
- 
+
 async function changePw(){
   const v=document.getElementById('new-pw').value.trim();
   if(!v){alert('請輸入新密碼');return;}
   pw=v;await api({action:'setConfig',key:'pw',value:pw});
   document.getElementById('new-pw').value='';alert('密碼已更新！');
 }
- 
+
 init();
 </script>
 </body>
