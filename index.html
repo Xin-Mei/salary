@@ -646,14 +646,14 @@ function calcSum(){
   const hosp=document.getElementById('f-hosp').value;
   const r=rates[hosp]||{with:700,without:800};
   const commission=Number(document.getElementById('f-commission').value)||0;
-  let salary=0,any=false;
+  let salaryExact=0,any=false;
   segs.forEach(s=>{
     const mins=calcMins(s.start,s.end);
     if(!mins)return;
     any=true;
-    // 用分鐘數計算，最後四捨五入到元
-    salary+=Math.round(mins/60*(s.assist==='with'?r.with:r.without));
+    salaryExact+=mins/60*(s.assist==='with'?r.with:r.without);
   });
+  const salary=Math.round(salaryExact); // 全部段落加總後才四捨五入
   const box=document.getElementById('summary');
   if(!any||!hosp){box.style.display='none';return;}
   box.style.display='flex';
@@ -676,14 +676,16 @@ function goConfirm(){
   if(commV===''){showErr('f-commission','e-commission');valid=false;}else clearErr('f-commission','e-commission');
   const r=rates[hosp]||{with:700,without:800};
   let segData=[],salary=0;
+  let salaryExact=0;
   segs.forEach((s,i)=>{
     const mins=calcMins(s.start,s.end);if(!mins)return;
     const hrs=+(mins/60).toFixed(2); // 顯示用工時
     const rate=s.assist==='with'?r.with:r.without;
-    const amt=Math.round(mins/60*rate); // 精確計算再四捨五入
-    salary+=amt;
-    segData.push({seg:i+1,start:s.start,end:s.end,assist:s.assist,hrs,rate,amt});
+    const exactAmt=mins/60*rate; // 精確金額（不在此四捨五入）
+    salaryExact+=exactAmt;
+    segData.push({seg:i+1,start:s.start,end:s.end,assist:s.assist,hrs,rate,amt:Math.round(exactAmt)});
   });
+  salary=Math.round(salaryExact); // 全部加總後才四捨五入
   // 檢查每段的時間順序
   let timeOrderOk=true;
   segs.forEach((s,i)=>{
