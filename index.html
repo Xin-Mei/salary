@@ -783,14 +783,30 @@ function atab(t){
 
 /* 顯示班別明細：優先使用 Sheet 純文字格式，否則從 segs 陣列組合 */
 function formatSegsDisplay(r){
-  // 若有原始純文字（新格式），直接顯示
+  // 新格式：純文字 "07:30-12:02 無藥助 / 14:00-21:50 無藥助"
   if(r.rawSegText && !r.rawSegText.startsWith('[')) {
-    return r.rawSegText.split('/').map(s=>s.trim()).join('<br>');
+    return r.rawSegText.split('/').map((part,i)=>{
+      const p=part.trim();
+      const m=p.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})\s*(有藥助|無藥助)/);
+      if(m){
+        const isWith=m[3]==='有藥助';
+        // 計算工時顯示
+        const [sh,sm]=m[1].split(':').map(Number);
+        const [eh,em]=m[2].split(':').map(Number);
+        let mins=(eh*60+em)-(sh*60+sm);
+        if(mins<=0)mins+=1440;
+        const hrs=(mins/60).toFixed(2);
+        return `段${i+1} ${m[1]}–${m[2]} <span class="badge ${isWith?'by':'bn'}">${m[3]}</span> ${hrs}hr`;
+      }
+      return p;
+    }).join('<br>');
   }
-  // 從 segs 陣列組合
+  // 舊格式 JSON：統一格式顯示
   return (r.segs||[]).map(s=>{
     if(!s.start&&!s.end) return '';
-    return `段${s.seg} ${s.start}–${s.end} <span class="badge ${s.assist==='with'?'by':'bn'}">${s.assist==='with'?'有':'無'}藥助</span>${s.hrs?` ${s.hrs}hr`:''}`;
+    const isWith=s.assist==='with';
+    const hrs=s.hrs?` ${parseFloat(s.hrs).toFixed(2)}hr`:'';
+    return `段${s.seg} ${s.start}–${s.end} <span class="badge ${isWith?'by':'bn'}">${isWith?'有藥助':'無藥助'}</span>${hrs}`;
   }).filter(Boolean).join('<br>');
 }
 
