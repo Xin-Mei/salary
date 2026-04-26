@@ -181,7 +181,7 @@ tr:hover td{background:#fafafa}
           <div class="err-msg" id="e-rep">請選擇櫃台人員</div>
         </div>
         <label style="margin-bottom:.6rem;display:block;font-size:13px;color:#555;font-weight:500">
-          班別時段 <span class="req">*</span> <span style="font-weight:400;color:#999">（最多 3 段）</span>
+          班別時段 <span class="req">*</span> <span style="font-weight:400;color:#999">（最多 3 段，時間僅需打數字，如 730 → 07:30）</span>
         </label>
         <div id="segs-wrap"></div>
         <button class="add-seg-btn" id="add-seg-btn" onclick="addSeg()">＋ 新增時段</button>
@@ -619,7 +619,16 @@ function calcHrs(s,e){
   const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
   let m=(eh*60+em)-(sh*60+sm);
   if(m<=0)m+=1440; // 跨午夜
-  return+(m/60).toFixed(2);
+  return+(m/60).toFixed(2); // 顯示用，精確到分鐘
+}
+
+// 用分鐘數計算薪資，避免 toFixed 截斷造成誤差
+function calcMins(s,e){
+  if(!s||!e)return null;
+  const[sh,sm]=s.split(':').map(Number),[eh,em]=e.split(':').map(Number);
+  let m=(eh*60+em)-(sh*60+sm);
+  if(m<=0)m+=1440;
+  return m; // 回傳整數分鐘
 }
 
 /* 驗證下班時間必須大於上班時間（跨午夜除外，工時 > 12hr 視為跨午夜）*/
@@ -638,7 +647,13 @@ function calcSum(){
   const r=rates[hosp]||{with:700,without:800};
   const commission=Number(document.getElementById('f-commission').value)||0;
   let salary=0,any=false;
-  segs.forEach(s=>{const h=calcHrs(s.start,s.end);if(!h)return;any=true;salary+=Math.round(h*(s.assist==='with'?r.with:r.without));});
+  segs.forEach(s=>{
+    const mins=calcMins(s.start,s.end);
+    if(!mins)return;
+    any=true;
+    // 用分鐘數計算，最後四捨五入到元
+    salary+=Math.round(mins/60*(s.assist==='with'?r.with:r.without));
+  });
   const box=document.getElementById('summary');
   if(!any||!hosp){box.style.display='none';return;}
   box.style.display='flex';
@@ -662,9 +677,11 @@ function goConfirm(){
   const r=rates[hosp]||{with:700,without:800};
   let segData=[],salary=0;
   segs.forEach((s,i)=>{
-    const hrs=calcHrs(s.start,s.end);if(!hrs)return;
+    const mins=calcMins(s.start,s.end);if(!mins)return;
+    const hrs=+(mins/60).toFixed(2); // 顯示用工時
     const rate=s.assist==='with'?r.with:r.without;
-    const amt=Math.round(hrs*rate);salary+=amt;
+    const amt=Math.round(mins/60*rate); // 精確計算再四捨五入
+    salary+=amt;
     segData.push({seg:i+1,start:s.start,end:s.end,assist:s.assist,hrs,rate,amt});
   });
   // 檢查每段的時間順序
