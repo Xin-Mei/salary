@@ -338,7 +338,21 @@ async function loadAll(){
     records=(rR.records||[]).map(r=>({
       id:r['ID'], date:String(r['日期']||'').slice(0,10),
       hosp:r['院區'], ph:r['支援藥師'], rep:r['櫃台人員'],
-      segs:(()=>{try{return JSON.parse(r['段別明細']||'[]');}catch(e){return [];}})(),
+      rawSegText: String(r['段別明細']||''),
+      segs:(()=>{
+        const raw=String(r['段別明細']||'');
+        // 新格式：純文字 "08:00-12:00 有藥助 / 14:00-18:00 無藥助"
+        if(raw&&!raw.startsWith('[')){
+          return raw.split('/').map((part,i)=>{
+            const p=part.trim();
+            const m=p.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})\s*(有藥助|無藥助)?/);
+            if(m) return {seg:i+1,start:m[1],end:m[2],assist:m[3]==='有藥助'?'with':'without',hrs:0,rate:0,amt:0};
+            return {seg:i+1,start:'',end:'',assist:'with',hrs:0,rate:0,amt:0};
+          });
+        }
+        // 舊格式：JSON
+        try{return JSON.parse(raw||'[]');}catch(e){return [];}
+      })(),
       salaryTotal:Number(r['薪資合計'])||0,
       commission:Number(r['商品抽成'])||0,
       // 應付合計：優先讀「應付合計」欄，若為空則用薪資合計+商品抽成加總
@@ -748,6 +762,19 @@ function atab(t){
   if(t==='analytics')renderAnalytics();
 }
 
+/* 顯示班別明細：優先使用 Sheet 純文字格式，否則從 segs 陣列組合 */
+function formatSegsDisplay(r){
+  // 若有原始純文字（新格式），直接顯示
+  if(r.rawSegText && !r.rawSegText.startsWith('[')) {
+    return r.rawSegText.split('/').map(s=>s.trim()).join('<br>');
+  }
+  // 從 segs 陣列組合
+  return (r.segs||[]).map(s=>{
+    if(!s.start&&!s.end) return '';
+    return `段${s.seg} ${s.start}–${s.end} <span class="badge ${s.assist==='with'?'by':'bn'}">${s.assist==='with'?'有':'無'}藥助</span>${s.hrs?` ${s.hrs}hr`:''}`;
+  }).filter(Boolean).join('<br>');
+}
+
 function getFiltered(){
   const fh=document.getElementById('fi-h').value;
   const from=document.getElementById('fi-from').value;
@@ -769,7 +796,7 @@ function renderRec(){
     <th>日期</th><th>院區</th><th>藥師</th><th>櫃台</th><th>班別</th><th>薪資</th><th>抽成</th><th>合計</th><th></th>
   </tr></thead><tbody>${f.sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`<tr>
     <td>${r.date}</td><td>${r.hosp}</td><td>${r.ph}</td><td>${r.rep||'—'}</td>
-    <td><div class="segs-cell">${(r.segs||[]).map(s=>`段${s.seg} ${s.start}–${s.end} <span class="badge ${s.assist==='with'?'by':'bn'}">${s.assist==='with'?'有':'無'}藥助</span> ${s.hrs}hr`).join('<br>')}</div></td>
+    <td><div class="segs-cell">${formatSegsDisplay(r)}</div></td>
     <td>$${(r.salaryTotal||0).toLocaleString()}</td>
     <td>$${(r.commission||0).toLocaleString()}</td>
     <td style="font-weight:700;color:#0F6E56">$${r.total.toLocaleString()}</td>
