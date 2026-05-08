@@ -260,9 +260,9 @@ tr:hover td{background:#fafafa}
 
       <div id="atab-rec">
         <div class="stat-grid">
-          <div class="stat-card"><div class="stat-lbl">本月筆數</div><div class="stat-val" id="s-cnt">0</div></div>
-          <div class="stat-card"><div class="stat-lbl">本月工時</div><div class="stat-val" id="s-hrs">0 hr</div></div>
-          <div class="stat-card"><div class="stat-lbl">本月應付合計</div><div class="stat-val" id="s-amt">$0</div></div>
+          <div class="stat-card"><div class="stat-lbl" id="lbl-cnt">篩選筆數</div><div class="stat-val" id="s-cnt">0</div></div>
+          <div class="stat-card"><div class="stat-lbl" id="lbl-hrs">篩選工時</div><div class="stat-val" id="s-hrs">0 hr</div></div>
+          <div class="stat-card"><div class="stat-lbl" id="lbl-amt">篩選應付合計</div><div class="stat-val" id="s-amt">$0</div></div>
         </div>
         <div class="card">
           <div class="filter-row">
@@ -818,12 +818,11 @@ function getFiltered(){
   return records.filter(r=>(!fh||r.hosp===fh)&&(!from||r.date>=from)&&(!to||r.date<=to)&&(!fn||r.ph.includes(fn)));
 }
 function renderRec(){
-  const today=new Date().toISOString().slice(0,10);
-  const m1=today.slice(0,8)+'01';
-  const mR=records.filter(r=>r.date>=m1&&r.date<=today);
-  document.getElementById('s-cnt').textContent=mR.length;
-  document.getElementById('s-hrs').textContent=mR.reduce((s,r)=>s+(r.segs||[]).reduce((a,sg)=>a+sg.hrs,0),0).toFixed(1)+' hr';
-  document.getElementById('s-amt').textContent='$'+mR.reduce((s,r)=>s+r.total,0).toLocaleString();
+  // 統計卡：跟著篩選條件（院區、日期、藥師）動態更新
+  const f=getFiltered();
+  document.getElementById('s-cnt').textContent=f.length;
+  document.getElementById('s-hrs').textContent=f.reduce((s,r)=>s+(r.segs||[]).reduce((a,sg)=>a+sg.hrs,0),0).toFixed(1)+' hr';
+  document.getElementById('s-amt').textContent='$'+f.reduce((s,r)=>s+r.total,0).toLocaleString();
   const f=getFiltered(),wrap=document.getElementById('rec-wrap');
   if(!f.length){wrap.innerHTML='<div class="empty-msg">尚無符合記錄</div>';return;}
   const sumT=f.reduce((s,r)=>s+r.total,0);
