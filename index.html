@@ -331,9 +331,22 @@ function api(params){
 
 async function loadAll(){
   setSyncBadge('ing');
-  const [rR,cR]=await Promise.all([api({action:'getAll'}),api({action:'getConfig'})]);
+  console.log('[薪資系統] 開始連線...');
+  let rR, cR;
+  try {
+    [rR,cR]=await Promise.all([api({action:'getAll'}),api({action:'getConfig'})]);
+    console.log('[薪資系統] getAll 回傳:', rR);
+    console.log('[薪資系統] getConfig 回傳:', cR);
+  } catch(e) {
+    console.error('[薪資系統] Promise.all 失敗:', e);
+    setSyncBadge('err');
+    return;
+  }
   let ok=true;
-  if(!rR||rR.error){ok=false;}
+  if(!rR||rR.error){
+    console.error('[薪資系統] getAll 錯誤:', rR);
+    ok=false;
+  }
   else{
     records=(rR.records||[]).map(r=>({
       id:r['ID'], date:String(r['日期']||'').slice(0,10),
@@ -823,7 +836,7 @@ function renderRec(){
   document.getElementById('s-cnt').textContent=f.length;
   document.getElementById('s-hrs').textContent=f.reduce((s,r)=>s+(r.segs||[]).reduce((a,sg)=>a+sg.hrs,0),0).toFixed(1)+' hr';
   document.getElementById('s-amt').textContent='$'+f.reduce((s,r)=>s+r.total,0).toLocaleString();
-  const f=getFiltered(),wrap=document.getElementById('rec-wrap');
+  const wrap=document.getElementById('rec-wrap');
   if(!f.length){wrap.innerHTML='<div class="empty-msg">尚無符合記錄</div>';return;}
   const sumT=f.reduce((s,r)=>s+r.total,0);
   wrap.innerHTML=`<div style="overflow-x:auto"><table><thead><tr>
