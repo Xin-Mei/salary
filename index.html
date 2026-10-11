@@ -53,6 +53,10 @@ button,input,select{font-family:inherit}
 .in{width:100%;padding:12px 14px;border:1px solid #D8D4CA;border-radius:10px;font-size:15px;background:#fff;color:var(--ink);transition:.15s}
 .in:focus{outline:none;border-color:var(--brand2);box-shadow:0 0 0 3px rgba(42,99,85,.12)}
 .in.err{border-color:var(--warn);box-shadow:0 0 0 3px rgba(179,38,30,.08)}
+/* iPhone 日期欄位會撐出卡片，強制限制寬度 */
+input[type=date].in{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;min-height:48px;text-align:left}
+input[type=date].in::-webkit-date-and-time-value{text-align:left}
+.fg,.combo{min-width:0}
 .emsg{font-size:13px;color:var(--warn);margin-top:5px;display:none}
 .emsg.show{display:block}
 .hint{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.7}
