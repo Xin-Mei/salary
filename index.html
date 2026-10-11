@@ -467,10 +467,7 @@ function rateOf(hosp,ph){
 function segRate(hosp,ph,assist){const r=rateOf(hosp,ph);return assist==='with'?r.with:r.without;}
 function renderRateInfo(){
   const hosp=$('f-hosp').value,ph=$('f-ph').value,tip='時間僅需打數字，如 <b>730</b> → 07:30、<b>1400</b> → 14:00。';
-  if(ph&&SPECIAL_RATES[ph]){
-    const r=SPECIAL_RATES[ph];
-    $('rate-info').innerHTML=`ⓘ <b>${esc(ph)}</b> 專屬時薪：有藥助 <b>$${r.with}</b>／無藥助 <b>$${r.without}</b><br>${tip}`;return;
-  }
+  if(ph&&SPECIAL_RATES[ph]){$('rate-info').innerHTML='ⓘ '+tip;return;} // 專屬時薪照算，不另外顯示
   if(!hosp){$('rate-info').innerHTML='ⓘ 選擇院區後顯示時薪費率。<br>'+tip;return;}
   const r=rateOf(hosp,ph);
   $('rate-info').innerHTML=`ⓘ <b>${esc(hosp)}</b> 時薪：有藥助 <b>$${r.with}</b>／無藥助 <b>$${r.without}</b><br>${tip}`;
