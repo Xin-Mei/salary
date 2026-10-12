@@ -98,6 +98,7 @@ input[type=date].in::-webkit-date-and-time-value{text-align:left}
 .badge{display:inline-block;padding:1px 9px;border-radius:99px;font-size:12px;font-weight:600;vertical-align:1px}
 .b-w{background:var(--soft);color:var(--brand)}
 .b-wo{background:var(--amber-bg);color:var(--amber)}
+.th-note{background:var(--amber-bg);border:1px solid #EBD9B0;color:#7A5A12;border-radius:10px;padding:10px 12px;font-size:13px;margin:10px 0 2px;line-height:1.7}
 
 /* ── Buttons ── */
 .btn{width:100%;padding:13px;border:none;border-radius:10px;background:var(--brand);color:#fff;font-size:16px;font-weight:600;cursor:pointer;letter-spacing:.06em;transition:.15s}
@@ -249,7 +250,7 @@ td.nw{white-space:nowrap}
       <div class="card">
         <div class="step-t">STEP 3 · 薪資試算與送出</div>
         <div id="calc"></div>
-        <button type="button" class="btn" onclick="goConfirm()">預覽確認單 →</button>
+        <button type="button" class="btn" id="btn-preview" onclick="goConfirm()">預覽確認單 →</button>
       </div>
 
     </div>
@@ -348,7 +349,8 @@ const GAS='https://script.google.com/macros/s/AKfycbx0yG9IzlalB4vXrM2VO_NTgZu6I8
 const DEFAULT_HOSPS=['鶯歌','三樹','桃園','土城','八德','龍潭','大溪','大竹','大湳','平鎮','埔心','觀音','龍岡','大園'];
 const DEF_RATE={with:700,without:800};
 // 特定藥師的專屬時薪（不分院區）
-const SPECIAL_RATES={'王彥儒':{with:350,without:400}};
+// freeHours：每月需累計滿幾小時後，超過的部分才計薪（以支援日期的月份計算，跨月歸零）
+const SPECIAL_RATES={'王彥儒':{with:350,without:400,freeHours:25}};
 
 let records=[],rates={},hosps=[...DEFAULT_HOSPS],pharmacists=[],reporters=[],pw='admin123';
 let segs=[],pending=null,unlocked=false;
@@ -425,20 +427,24 @@ function parseSegs(raw){
   }).filter(Boolean);
 }
 
+function parseRecords(rR){
+  return (rR.records||[]).map(r=>{
+    const sal=Number(r['薪資合計'])||0, com=Number(r['商品抽成'])||0;
+    const tot=r['應付合計']===''||r['應付合計']==null?(sal+com):Number(r['應付合計'])||0;
+    return {
+      id:String(r['ID']), date:normDate(r['日期']),
+      hosp:String(r['院區']||''), ph:String(r['支援藥師']||''), rep:String(r['櫃台人員']||''),
+      segs:parseSegs(r['段別明細']),
+      salary:sal, commission:com, total:tot
+    };
+  }).filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date));
+}
 async function loadAll(){
   setSync('ing');
   const [rR,cR]=await Promise.all([api({action:'getAll'}),api({action:'getConfig'})]);
   let ok=true;
   if(rR&&!rR.error){
-    records=(rR.records||[]).map(r=>{
-      const sal=Number(r['薪資合計'])||0, com=Number(r['商品抽成'])||0;
-      return {
-        id:String(r['ID']), date:normDate(r['日期']),
-        hosp:String(r['院區']||''), ph:String(r['支援藥師']||''), rep:String(r['櫃台人員']||''),
-        segs:parseSegs(r['段別明細']),
-        salary:sal, commission:com, total:Number(r['應付合計'])||(sal+com)
-      };
-    }).filter(r=>/^\d{4}-\d{2}-\d{2}$/.test(r.date));
+    records=parseRecords(rR);
   }else{ok=false;console.error('[getAll]',rR);}
   if(cR&&!cR.error){
     rates=cR.rates||{};
@@ -571,21 +577,48 @@ function checkSeg(i,force){
 }
 
 /* ── 試算（全部段落加總後才四捨五入） ── */
+function fmtH(n){return String(+(+n).toFixed(2));}
+// 同一位藥師、同一個月份（依支援日期）已登錄的分鐘數
+function monthMins(ph,date){
+  const ym=String(date||'').slice(0,7);
+  if(!ym) return 0;
+  return records.filter(x=>x.ph===ph&&x.date.slice(0,7)===ym)
+    .reduce((a,x)=>a+(x.segs||[]).reduce((b,s)=>b+minsBetween(s.start,s.end),0),0);
+}
 function compute(){
-  const hosp=$('f-hosp').value,ph=$('f-ph').value,rows=[];
+  const hosp=$('f-hosp').value,ph=$('f-ph').value,date=$('f-date').value,rows=[];
+  const sp=SPECIAL_RATES[ph];
+  const th=sp&&sp.freeHours?{limit:sp.freeHours,priorMins:monthMins(ph,date)}:null;
+  let free=th?Math.max(0,th.limit*60-th.priorMins):0; // 本次還有幾分鐘屬於「累計中、不計薪」
   let exact=0,mins=0;
   segs.forEach((s,i)=>{
     const st=fmtTime(s.start),en=fmtTime(s.end);
     if(!st||!en||!orderOk(st,en)) return;
-    const m=minsBetween(st,en),rate=segRate(hosp,ph,s.assist),amt=m/60*rate;
+    const m=minsBetween(st,en),rate=segRate(hosp,ph,s.assist);
+    const freeUsed=Math.min(m,free); free-=freeUsed;
+    const paidM=m-freeUsed, amt=paidM/60*rate;
     exact+=amt; mins+=m;
-    rows.push({seg:i+1,start:st,end:en,assist:s.assist,hrs:+(m/60).toFixed(2),rate,amt:Math.round(amt)});
+    rows.push({seg:i+1,start:st,end:en,assist:s.assist,hrs:+(m/60).toFixed(2),paidHrs:+(paidM/60).toFixed(2),rate,amt:Math.round(amt),th:!!th});
   });
   const salary=Math.round(exact),commission=Number($('f-com').value)||0;
-  return {hosp,rows,salary,commission,total:salary+commission,hrs:+(mins/60).toFixed(2)};
+  if(th){th.prior=th.priorMins/60;th.after=(th.priorMins+mins)/60;}
+  return {hosp,rows,salary,commission,total:salary+commission,hrs:+(mins/60).toFixed(2),th};
 }
 function segLines(rows){
-  return rows.map(r=>`<div class="segl"><span>第${r.seg}段　${r.start}–${r.end} <span class="badge ${r.assist==='with'?'b-w':'b-wo'}">${r.assist==='with'?'有藥助':'無藥助'}</span><br><small>${r.hrs} hr × $${r.rate}</small></span><b>$${r.amt.toLocaleString()}</b></div>`).join('');
+  return rows.map(r=>{
+    let sub=`${r.hrs} hr × $${r.rate}`;
+    if(r.th&&r.paidHrs===0) sub=`${r.hrs} hr（月累計中，不計薪）`;
+    else if(r.th&&r.paidHrs<r.hrs) sub=`${r.hrs} hr，超過門檻 ${fmtH(r.paidHrs)} hr × $${r.rate}`;
+    return `<div class="segl"><span>第${r.seg}段　${r.start}–${r.end} <span class="badge ${r.assist==='with'?'b-w':'b-wo'}">${r.assist==='with'?'有藥助':'無藥助'}</span><br><small>${sub}</small></span><b>$${r.amt.toLocaleString()}</b></div>`;
+  }).join('');
+}
+function thHtml(c){
+  if(!c.th) return '';
+  const t=c.th, reached=t.after>t.limit;
+  return `
+    <div class="kv"><span>本月已累計（本次前）</span><b>${fmtH(t.prior)} hr</b></div>
+    <div class="kv"><span>本月累計（含本次）</span><b>${fmtH(t.after)} / ${t.limit} hr</b></div>
+    ${reached?'':`<div class="th-note">未達本月 ${t.limit} 小時門檻，本次只記錄時數，無須支付薪資。</div>`}`;
 }
 function renderCalc(){
   const c=compute(),el=$('calc');
@@ -597,13 +630,14 @@ function renderCalc(){
     <div class="sec-t">班別明細</div>
     ${segLines(c.rows)}
     <div class="kv" style="margin-top:4px"><span>工時合計</span><b>${c.hrs} hr</b></div>
+    ${thHtml(c)}
     <div class="kv"><span>薪資小計</span><b>${money(c.salary)}</b></div>
     <div class="kv"><span>商品抽成</span><b>${money(c.commission)}</b></div>
-    <div class="total"><span>當日應付合計</span><b>${money(c.total)}</b></div>`;
+    <div class="total"><span>${c.th&&!c.total?'本次無須支付薪資':'當日應付合計'}</span><b>${money(c.total)}</b></div>`;
 }
 
 /* ── 確認單 ── */
-function goConfirm(){
+async function goConfirm(){
   let ok=true;
   const date=$('f-date').value,hosp=$('f-hosp').value,ph=$('f-ph').value,rep=$('f-rep').value,comV=$('f-com').value;
   if(!date){bad('f-date','e-date');ok=false;}
@@ -613,7 +647,15 @@ function goConfirm(){
   if(comV===''||Number(comV)<0){bad('f-com','e-com');ok=false;}
   segs.forEach((_,i)=>{if(!checkSeg(i,true))ok=false;});
   if(!ok){toast('還有欄位沒填完整，請檢查紅字提示','err');return;}
+  if(SPECIAL_RATES[ph]&&SPECIAL_RATES[ph].freeHours){
+    const b=$('btn-preview');b.disabled=true;b.textContent='計算本月累計時數中…';
+    const rR=await api({action:'getAll'});
+    b.disabled=false;b.textContent='預覽確認單 →';
+    if(rR&&!rR.error){records=parseRecords(rR);renderRec();renderAnalytics();}
+    else{toast('讀取累計時數失敗，請稍後再試','err');return;}
+  }
   const c=compute();
+  renderCalc();
   pending={date,hosp,ph,rep,rows:c.rows,salary:c.salary,commission:c.commission,total:c.total,hrs:c.hrs};
   $('rc-sub').textContent='填報時間：'+new Date().toLocaleString('zh-TW',{hour12:false});
   $('rc-body').innerHTML=`
@@ -624,9 +666,10 @@ function goConfirm(){
     <div class="sec-t">班別明細</div>
     ${segLines(c.rows)}
     <div class="kv" style="margin-top:4px"><span>工時合計</span><b>${c.hrs} hr</b></div>
+    ${thHtml(c)}
     <div class="kv"><span>薪資小計</span><b>${money(c.salary)}</b></div>
     <div class="kv"><span>商品抽成</span><b>${money(c.commission)}</b></div>
-    <div class="total"><span>應付合計</span><b>${money(c.total)}</b></div>`;
+    <div class="total"><span>${c.th&&!c.total?'本次無須支付薪資':'應付合計'}</span><b>${money(c.total)}</b></div>`;
   $('modal').classList.add('on');
 }
 function closeModal(){$('modal').classList.remove('on');}
